@@ -1,0 +1,121 @@
+{
+  "version": "2026-07-17.1",
+  "currency": "USD",
+  "unit_tokens": 1000000,
+  "models": [
+    {
+      "id": "openai/gpt-5.6-sol",
+      "provider": "openai",
+      "api_model": "gpt-5.6-sol",
+      "label": "GPT-5.6 Sol",
+      "description": "OpenAI flagship for complex research and reasoning.",
+      "default_base_url": "https://api.openai.com/v1",
+      "context_window": 1050000,
+      "rates": [{"effective_from": "2026-07-01", "input": "5.00", "cache_read": "0.50", "cache_write": "6.25", "output": "30.00"}],
+      "source_urls": ["https://developers.openai.com/api/docs/models/gpt-5.6-sol"]
+    },
+    {
+      "id": "openai/gpt-5.6-terra",
+      "provider": "openai",
+      "api_model": "gpt-5.6-terra",
+      "label": "GPT-5.6 Terra",
+      "description": "Balanced OpenAI research model.",
+      "default_base_url": "https://api.openai.com/v1",
+      "context_window": 1050000,
+      "rates": [{"effective_from": "2026-07-01", "input": "2.50", "cache_read": "0.25", "cache_write": "3.125", "output": "15.00"}],
+      "source_urls": ["https://developers.openai.com/api/docs/models/gpt-5.6-terra"]
+    },
+    {
+      "id": "openai/gpt-5.6-luna",
+      "provider": "openai",
+      "api_model": "gpt-5.6-luna",
+      "label": "GPT-5.6 Luna",
+      "description": "Cost-sensitive OpenAI research model.",
+      "default_base_url": "https://api.openai.com/v1",
+      "context_window": 1050000,
+      "rates": [{"effective_from": "2026-07-01", "input": "1.00", "cache_read": "0.10", "cache_write": "1.25", "output": "6.00"}],
+      "source_urls": ["https://developers.openai.com/api/docs/models/gpt-5.6-luna"]
+    },
+    {
+      "id": "anthropic/claude-fable-5",
+      "provider": "anthropic",
+      "api_model": "claude-fable-5",
+      "label": "Claude Fable 5",
+      "description": "Anthropic model for high-capability creative and analytical work.",
+      "default_base_url": "https://api.anthropic.com",
+      "context_window": 1000000,
+      "rates": [{"effective_from": "2026-07-01", "input": "10.00", "cache_read": "1.00", "cache_write": "12.50", "output": "50.00"}],
+      "pricing_notes": "cache_write is the 5-minute rate used by MicroManus; Anthropic's 1-hour cache-write rate is $20/MTok",
+      "source_urls": ["https://platform.claude.com/docs/en/about-claude/pricing"]
+    },
+    {
+      "id": "anthropic/claude-opus-4-8",
+      "provider": "anthropic",
+      "api_model": "claude-opus-4-8",
+      "label": "Claude Opus 4.8",
+      "description": "Anthropic model for long-horizon agentic and enterprise research.",
+      "default_base_url": "https://api.anthropic.com",
+      "context_window": 1000000,
+      "rates": [{"effective_from": "2026-07-01", "input": "5.00", "cache_read": "0.50", "cache_write": "6.25", "output": "25.00"}],
+      "source_urls": ["https://platform.claude.com/docs/en/about-claude/models/whats-new-claude-4-8", "https://platform.claude.com/docs/en/about-claude/pricing"]
+    },
+    {
+      "id": "anthropic/claude-sonnet-5",
+      "provider": "anthropic",
+      "api_model": "claude-sonnet-5",
+      "label": "Claude Sonnet 5",
+      "description": "Anthropic's balanced model with introductory pricing through August 2026.",
+      "default_base_url": "https://api.anthropic.com",
+      "context_window": 1000000,
+      "rates": [
+        {"effective_from": "2026-06-30", "effective_to": "2026-08-31", "input": "2.00", "cache_read": "0.20", "cache_write": "2.50", "output": "10.00"},
+        {"effective_from": "2026-09-01", "input": "3.00", "cache_read": "0.30", "cache_write": "3.75", "output": "15.00"}
+      ],
+      "source_urls": ["https://platform.claude.com/docs/en/about-claude/models/whats-new-sonnet-5", "https://platform.claude.com/docs/en/about-claude/pricing"]
+    },
+    {
+      "id": "anthropic/claude-haiku-4-5",
+      "provider": "anthropic",
+      "api_model": "claude-haiku-4-5-20251001",
+      "label": "Claude Haiku 4.5",
+      "description": "Fast, low-cost Claude model.",
+      "default_base_url": "https://api.anthropic.com",
+      "context_window": 200000,
+      "rates": [{"effective_from": "2025-10-01", "input": "1.00", "cache_read": "0.10", "cache_write": "1.25", "output": "5.00"}],
+      "source_urls": ["https://platform.claude.com/docs/en/about-claude/pricing"]
+    },
+    {
+      "id": "kimi/kimi-k3",
+      "provider": "kimi",
+      "api_model": "kimi-k3",
+      "label": "Kimi K3",
+      "description": "Kimi's current flagship long-context agent model.",
+      "default_base_url": "https://api.moonshot.ai/v1",
+      "context_window": 1000000,
+      "rates": [{"effective_from": "2026-07-01", "input": "3.00", "cache_read": "0.30", "cache_write": "3.00", "output": "15.00"}],
+      "source_urls": ["https://platform.kimi.ai/docs/pricing/chat"]
+    },
+    {
+      "id": "kimi/kimi-k2.7-code",
+      "provider": "kimi",
+      "api_model": "kimi-k2.7-code",
+      "label": "Kimi K2.7 Code",
+      "description": "Kimi's instruction-following agent and coding model.",
+      "default_base_url": "https://api.moonshot.ai/v1",
+      "context_window": 262144,
+      "rates": [{"effective_from": "2026-07-01", "input": "0.95", "cache_read": "0.19", "cache_write": "0.95", "output": "4.00"}],
+      "source_urls": ["https://platform.kimi.ai/"]
+    },
+    {
+      "id": "kimi/kimi-k2.6",
+      "provider": "kimi",
+      "api_model": "kimi-k2.6",
+      "label": "Kimi K2.6",
+      "description": "General-purpose multimodal Kimi agent model.",
+      "default_base_url": "https://api.moonshot.ai/v1",
+      "context_window": 262144,
+      "rates": [{"effective_from": "2026-01-27", "input": "0.95", "cache_read": "0.16", "cache_write": "0.95", "output": "4.00"}],
+      "source_urls": ["https://platform.kimi.ai/docs/pricing/chat-k26"]
+    }
+  ]
+}

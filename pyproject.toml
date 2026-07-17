@@ -1,0 +1,13 @@
+[project]
+name = "micromanus"
+version = "0.1.0"
+description = "MicroManus full-stack deep-research agent workspace"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["micromanus-agent"]
+
+[tool.uv.sources]
+micromanus-agent = { workspace = true }
+
+[tool.uv.workspace]
+members = ["services/agent"]
