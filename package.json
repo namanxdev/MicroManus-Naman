@@ -1,0 +1,19 @@
+{
+  "name": "micromanus",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace @micromanus/web",
+    "build": "npm run build --workspace @micromanus/web",
+    "start": "npm run start --workspace @micromanus/web",
+    "typecheck": "npm run typecheck --workspace @micromanus/web",
+    "lint": "npm run lint --workspace @micromanus/web"
+  }
+}
+

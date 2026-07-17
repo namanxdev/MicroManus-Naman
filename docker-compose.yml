@@ -1,0 +1,18 @@
+services:
+  agent:
+    build:
+      context: ./services/agent
+    environment:
+      MICROMANUS_AGENT_ENVIRONMENT: development
+      MICROMANUS_AGENT_SERVICE_TOKEN: ${AGENT_SERVICE_TOKEN}
+      MICROMANUS_AGENT_CHECKPOINT_BACKEND: sqlite
+      MICROMANUS_AGENT_CHECKPOINT_DB_PATH: /data/checkpoints.sqlite
+      MICROMANUS_AGENT_ARTIFACT_DIR: /data/artifacts
+    ports:
+      - "8000:8000"
+    volumes:
+      - agent-data:/data
+
+volumes:
+  agent-data:
+

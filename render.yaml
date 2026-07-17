@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: micromanus-agent
+    runtime: docker
+    dockerContext: services/agent
+    dockerfilePath: services/agent/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: MICROMANUS_AGENT_ENVIRONMENT
+        value: production
+      - key: MICROMANUS_AGENT_SERVICE_TOKEN
+        generateValue: true
+      - key: MICROMANUS_AGENT_CHECKPOINT_BACKEND
+        value: sqlite
+      - key: MICROMANUS_AGENT_CHECKPOINT_DB_PATH
+        value: /data/checkpoints.sqlite
+      - key: MICROMANUS_AGENT_ARTIFACT_DIR
+        value: /data/artifacts
+    disk:
+      name: micromanus-agent-data
+      mountPath: /data
+      sizeGB: 1
+

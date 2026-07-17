@@ -1,0 +1,39 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+*.egg-info/
+
+# Next.js / Node
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Runtime data and generated reports
+data/
+services/agent/data/
+*.sqlite
+*.sqlite3
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
