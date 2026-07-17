@@ -1,0 +1,270 @@
+import type {
+  ChatListItem,
+  ChatThread,
+  ModelOption,
+  UsageResponse,
+} from "./types";
+
+export const MODEL_OPTIONS: ModelOption[] = [
+  {
+    id: "gpt-5.6-sol",
+    name: "GPT-5.6 Sol",
+    provider: "OpenAI",
+    note: "Balanced research",
+  },
+  {
+    id: "gpt-5.6-terra",
+    name: "GPT-5.6 Terra",
+    provider: "OpenAI",
+    note: "Long investigations",
+  },
+  {
+    id: "gpt-5.6-luna",
+    name: "GPT-5.6 Luna",
+    provider: "OpenAI",
+    note: "Fast synthesis",
+  },
+  {
+    id: "claude-fable-5",
+    name: "Claude Fable 5",
+    provider: "Anthropic",
+    note: "Narrative synthesis",
+  },
+  {
+    id: "claude-opus-4-8",
+    name: "Claude Opus 4.8",
+    provider: "Anthropic",
+    note: "Maximum depth",
+  },
+  {
+    id: "claude-sonnet-5",
+    name: "Claude Sonnet 5",
+    provider: "Anthropic",
+    note: "Careful analysis",
+  },
+  {
+    id: "kimi-k3",
+    name: "Kimi K3",
+    provider: "Moonshot",
+    note: "Agentic research",
+  },
+  {
+    id: "kimi-k2.7-code",
+    name: "Kimi K2.7 Code",
+    provider: "Moonshot",
+    note: "Technical research",
+  },
+  {
+    id: "kimi-k2.6",
+    name: "Kimi K2.6",
+    provider: "Moonshot",
+    note: "Large context",
+  },
+];
+
+export const MOCK_CHATS: ChatListItem[] = [
+  {
+    id: "california-fire-brief",
+    title: "California fire resilience",
+    model: "claude-sonnet-5",
+    updatedAt: "12 min ago",
+    preview: "Drivers, mitigation, and policy gaps",
+  },
+  {
+    id: "battery-supply-chain",
+    title: "Battery supply chain map",
+    model: "gpt-5.6-sol",
+    updatedAt: "Yesterday",
+    preview: "Refining capacity through 2030",
+  },
+  {
+    id: "india-space-economy",
+    title: "India's private space economy",
+    model: "kimi-k3",
+    updatedAt: "Jul 14",
+    preview: "Funding, regulation, and launch cadence",
+  },
+];
+
+export const MOCK_THREAD: ChatThread = {
+  id: "california-fire-brief",
+  title: "California fire resilience",
+  model: "claude-sonnet-5",
+  updatedAt: "12 min ago",
+  messages: [
+    {
+      id: "message-user-1",
+      role: "user",
+      content:
+        "Create a concise research report on the recent California forest fires. Explain what is driving them, how the risk is changing, and the most credible prevention measures. Prioritize primary sources.",
+      createdAt: "10:21",
+      status: "complete",
+    },
+    {
+      id: "message-assistant-1",
+      role: "assistant",
+      content:
+        "California's fire risk is best understood as a compounding system, not a single-cause event. Hotter, drier conditions lengthen the window in which vegetation can burn, while accumulated fuels, expansion into the wildland–urban interface, and ignition infrastructure determine where a climate-driven hazard becomes a disaster.\n\nThe evidence points to a portfolio response. Prescribed fire and cultural burning reduce surface fuels where conditions allow. Targeted mechanical thinning is useful around communities and evacuation corridors, but is not a statewide substitute for fire. Hardened roofs, ember-resistant vents, defensible space, and selective power-grid investment reduce structure loss even when landscape fire cannot be prevented.\n\nThe practical priority is to fund repeatable maintenance, not one-off treatment. California can reduce loss by pairing landscape work with building standards, insurance incentives, reliable evacuation planning, and public reporting that measures whether treated acres remain effective over time.",
+      createdAt: "10:24",
+      status: "complete",
+      steps: [
+        {
+          id: "step-plan",
+          label: "Planned the investigation",
+          detail: "Separated climate signal, fuels, ignition, exposure, and mitigation evidence.",
+          status: "complete",
+          tool: "Reasoning",
+          duration: "8s",
+        },
+        {
+          id: "step-search",
+          label: "Searched primary sources",
+          detail: "Reviewed CAL FIRE, NOAA, USFS, and peer-reviewed attribution studies.",
+          status: "complete",
+          tool: "Web search",
+          duration: "42s",
+        },
+        {
+          id: "step-compare",
+          label: "Cross-checked claims",
+          detail: "Compared prevention claims against field studies and agency guidance.",
+          status: "complete",
+          tool: "Browser",
+          duration: "31s",
+        },
+        {
+          id: "step-write",
+          label: "Synthesized report",
+          detail: "Produced an evidence-weighted brief and a downloadable artifact.",
+          status: "complete",
+          tool: "Report writer",
+          duration: "19s",
+        },
+      ],
+      citations: [
+        {
+          id: "cite-cal-fire",
+          title: "2025 Fire Year Statistics",
+          url: "https://www.fire.ca.gov/incidents/2025",
+          domain: "fire.ca.gov",
+          excerpt: "Incident acreage and structure impact reporting from CAL FIRE.",
+          publishedAt: "2025",
+        },
+        {
+          id: "cite-noaa",
+          title: "Drought and wildfire climate indicators",
+          url: "https://www.noaa.gov/",
+          domain: "noaa.gov",
+          excerpt: "Observed temperature, vapor pressure deficit, and drought context.",
+          publishedAt: "2025",
+        },
+        {
+          id: "cite-usfs",
+          title: "Confronting the wildfire crisis",
+          url: "https://www.fs.usda.gov/managing-land/wildfire-crisis",
+          domain: "fs.usda.gov",
+          excerpt: "Landscape treatment strategy and community risk priorities.",
+          publishedAt: "2024",
+        },
+      ],
+      artifacts: [
+        {
+          id: "artifact-fire-report",
+          name: "California fire resilience brief.pdf",
+          type: "pdf",
+          url: "/api/artifacts/california-fire-brief.pdf",
+          size: "1.8 MB",
+        },
+      ],
+      usage: {
+        inputTokens: 18340,
+        outputTokens: 2861,
+        cacheTokens: 7420,
+        cost: 0.0916,
+      },
+    },
+  ],
+};
+
+export const MOCK_USAGE: UsageResponse = {
+  summary: {
+    creditsRemaining: 3.72,
+    totalCost: 1.2846,
+    totalTokens: 286420,
+    researchRuns: 14,
+    cachedSavings: 0.386,
+  },
+  daily: [
+    { label: "Jul 11", cost: 0.08 },
+    { label: "Jul 12", cost: 0.19 },
+    { label: "Jul 13", cost: 0.12 },
+    { label: "Jul 14", cost: 0.27 },
+    { label: "Jul 15", cost: 0.16 },
+    { label: "Jul 16", cost: 0.31 },
+    { label: "Jul 17", cost: 0.1546 },
+  ],
+  chats: [
+    {
+      id: "california-fire-brief",
+      title: "California fire resilience",
+      model: "Claude Sonnet 5",
+      date: "Today, 10:24",
+      duration: "1m 40s",
+      inputTokens: 18340,
+      outputTokens: 2861,
+      cacheTokens: 7420,
+      inputCost: 0.055,
+      outputCost: 0.0429,
+      cacheCost: 0.0022,
+      totalCost: 0.1001,
+    },
+    {
+      id: "battery-supply-chain",
+      title: "Battery supply chain map",
+      model: "GPT-5.6 Sol",
+      date: "Yesterday, 18:03",
+      duration: "2m 16s",
+      inputTokens: 24620,
+      outputTokens: 4130,
+      cacheTokens: 11980,
+      inputCost: 0.0492,
+      outputCost: 0.033,
+      cacheCost: 0.006,
+      totalCost: 0.0882,
+    },
+    {
+      id: "india-space-economy",
+      title: "India's private space economy",
+      model: "Kimi K3",
+      date: "Jul 14, 09:41",
+      duration: "3m 08s",
+      inputTokens: 38250,
+      outputTokens: 6820,
+      cacheTokens: 17630,
+      inputCost: 0.0229,
+      outputCost: 0.0171,
+      cacheCost: 0.0026,
+      totalCost: 0.0426,
+    },
+    {
+      id: "water-risk-screen",
+      title: "Semiconductor water-risk screen",
+      model: "Claude Opus 4.8",
+      date: "Jul 12, 16:18",
+      duration: "4m 51s",
+      inputTokens: 48910,
+      outputTokens: 7840,
+      cacheTokens: 22140,
+      inputCost: 0.0978,
+      outputCost: 0.0627,
+      cacheCost: 0.0111,
+      totalCost: 0.1716,
+    },
+  ],
+};
+
+export const RESEARCH_STARTERS = [
+  "Map the commercial space launch market through 2030",
+  "Compare evidence on four-day work week trials",
+  "Explain the current economics of grid-scale batteries",
+];
