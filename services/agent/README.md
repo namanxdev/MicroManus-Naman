@@ -1,3 +1,16 @@
+---
+title: MicroManus Agent
+emoji: "🔬"
+colorFrom: indigo
+colorTo: blue
+sdk: gradio
+python_version: "3.12"
+app_file: hf_app.py
+pinned: false
+suggested_hardware: cpu-basic
+short_description: Private FastAPI and LangGraph research service for MicroManus
+---
+
 # MicroManus research-agent service
 
 This directory is the Python/LangGraph half of MicroManus. It exposes an internal FastAPI API for a
@@ -33,6 +46,45 @@ docker run --rm -p 8000:8000 \
 Mount `/data` (or configure equivalent durable paths) so chat checkpoints and PDF artifacts survive a
 container restart. SQLite is appropriate for one service replica. A horizontally scaled deployment should
 replace it with a shared LangGraph checkpointer before adding replicas.
+
+## Deploy to a free Hugging Face custom-Python Space
+
+Hugging Face documents custom Python servers on port 7860 as an unofficial Gradio-SDK workflow. The Space
+deployment uses `hf_app.py` to run the existing FastAPI application as the top-level ASGI app, preserving
+its startup lifespan and authenticated `/v1/*` routes. Hugging Face installs this package from
+`requirements.txt`; no provider API key is included in the Space.
+
+Create a public Gradio Space, then set these runtime variables in **Settings -> Variables**:
+
+```text
+MICROMANUS_AGENT_ENVIRONMENT=production
+MICROMANUS_AGENT_CHECKPOINT_BACKEND=sqlite
+MICROMANUS_AGENT_CHECKPOINT_DB_PATH=/tmp/micromanus/checkpoints.sqlite
+MICROMANUS_AGENT_ARTIFACT_DIR=/tmp/micromanus/artifacts
+```
+
+Set this separately in **Settings -> Secrets**:
+
+```text
+MICROMANUS_AGENT_SERVICE_TOKEN=<the same random 32+ character token used by Vercel>
+```
+
+To publish this service directory to a newly created, otherwise empty Space:
+
+```bash
+git remote add huggingface https://huggingface.co/spaces/YOUR_USER/micromanus-agent
+git subtree split --prefix=services/agent -b huggingface-space
+git push --force huggingface huggingface-space:main
+git branch -D huggingface-space
+```
+
+The first push is forced only because Hugging Face creates the empty Space with its own starter commit.
+Do not force-push over a Space that contains work you need to preserve. When Git asks for a password, use
+a Hugging Face write token, never the account password.
+
+After the Space reports **Running**, verify `https://YOUR_USER-micromanus-agent.hf.space/health` and set
+that origin as Vercel's `AGENT_SERVICE_URL`. Free Space storage is ephemeral: SQLite checkpoints and PDF
+artifacts can be lost when the Space restarts or sleeps.
 
 ## Security boundary and credentials
 
