@@ -23,6 +23,7 @@ from .schemas import Artifact, ProviderCredentials, Source
 from .security import URLSafetyError, validate_public_url
 
 _USER_AGENT = "MicroManus-Research/0.1 (+https://micromanus.app)"
+_TAVILY_SEARCH_URL = "https://api.tavily.com/search"
 _BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
 
 
@@ -147,6 +148,70 @@ class BraveSearchClient:
                         title=_compact_text(item.get("title") or url, 500),
                         url=url,
                         snippet=_compact_text(item.get("description"), 1_000),
+                    )
+                )
+            except ValidationError:
+                continue
+        return sources
+
+
+class TavilySearchClient:
+    def __init__(self, api_key: str, settings: Settings):
+        self._api_key = api_key
+        self._settings = settings
+
+    async def search(self, query: str, count: int) -> list[Source]:
+        timeout = httpx.Timeout(self._settings.tool_timeout_seconds, connect=5.0)
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": _USER_AGENT,
+            "Authorization": f"Bearer {self._api_key}",
+        }
+        body = {
+            "query": query,
+            "topic": "general",
+            "search_depth": "basic",
+            "max_results": count,
+            "include_answer": False,
+            "include_raw_content": False,
+            "include_images": False,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=timeout, trust_env=False) as client:
+                response = await client.post(_TAVILY_SEARCH_URL, headers=headers, json=body)
+                response.raise_for_status()
+                payload = response.json()
+        except httpx.TimeoutException as exc:
+            raise ToolFailure("search_timeout", "web search timed out") from exc
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code in {401, 403}:
+                raise ToolFailure(
+                    "search_auth_failed", "Tavily Search credentials were rejected"
+                ) from exc
+            if exc.response.status_code == 429:
+                raise ToolFailure(
+                    "search_rate_limited", "Tavily Search rate limit was reached"
+                ) from exc
+            raise ToolFailure("search_failed", "Tavily Search request failed") from exc
+        except (httpx.HTTPError, ValueError) as exc:
+            raise ToolFailure("search_failed", "Tavily Search request failed") from exc
+
+        results = payload.get("results", []) if isinstance(payload, dict) else []
+        sources: list[Source] = []
+        for item in results[:count]:
+            if not isinstance(item, dict):
+                continue
+            url = str(item.get("url") or "")
+            if urlsplit(url).scheme.lower() not in {"http", "https"}:
+                continue
+            try:
+                sources.append(
+                    Source(
+                        id=_source_id(url),
+                        title=_compact_text(item.get("title") or url, 500),
+                        url=url,
+                        snippet=_compact_text(item.get("content"), 1_000),
                     )
                 )
             except ValidationError:
@@ -297,33 +362,42 @@ def build_research_tools(
     reports: ReportService,
     owner_namespace: str,
 ) -> list[BaseTool]:
+    tavily_secret = credentials.tavily_api_key
+    tavily = (
+        TavilySearchClient(tavily_secret.get_secret_value(), settings)
+        if tavily_secret is not None
+        else None
+    )
     brave_secret = credentials.brave_api_key
     brave = (
         BraveSearchClient(brave_secret.get_secret_value(), settings)
         if brave_secret is not None
         else None
     )
+    search_client = tavily or brave
+    search_provider = "tavily" if tavily is not None else "brave" if brave is not None else None
     fetcher = SafePageFetcher(settings)
 
     @tool("web_search", args_schema=SearchInput)
     async def web_search(query: str, count: int = 5) -> str:
         """Search the public web for recent sources. Use before claiming time-sensitive facts."""
 
-        if brave is None:
+        if search_client is None:
             return _safe_json(
                 {
                     "kind": "tool_error",
                     "code": "search_not_configured",
-                    "message": "Brave Search is not configured for this chat.",
+                    "message": "Web search is not configured for this chat.",
                 }
             )
         try:
             async with asyncio.timeout(settings.tool_timeout_seconds + 1):
-                sources = await brave.search(query.strip(), count)
+                sources = await search_client.search(query.strip(), count)
             await evidence.add_sources(sources)
             return _safe_json(
                 {
                     "kind": "search_results",
+                    "provider": search_provider,
                     "query": query.strip(),
                     "results": [source.model_dump(mode="json") for source in sources],
                     "untrusted_content": True,

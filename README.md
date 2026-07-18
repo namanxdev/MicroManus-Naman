@@ -10,7 +10,7 @@ No LLM key is bundled with the application. Provider keys are supplied by each u
 - Idempotent `SID_DRDROID` redemption and Razorpay Standard Checkout ($5 → 5 credits)
 - Encrypted BYOK settings for OpenAI, Anthropic, Kimi, and HTTPS OpenAI-compatible endpoints
 - Persistent chats with same-thread LangGraph checkpoints
-- A bounded think → tool → observe research loop with Brave Search and safe page/PDF fetching
+- A bounded think → tool → observe research loop with Tavily or Brave Search and safe page/PDF fetching
 - Authenticated PDF report artifacts
 - Cache-aware usage billing split across input, output, cache-read, and cache-write tokens
 - Per-chat cost analytics and CSV export
@@ -30,7 +30,7 @@ Next.js / TypeScript web service
         ▼
       FastAPI / LangGraph research service
         ├── user-supplied OpenAI / Anthropic / Kimi credential
-        ├── Brave Search + SSRF-hardened fetch
+        ├── Tavily/Brave Search + SSRF-hardened fetch
         ├── per-user/thread checkpoints
         └── protected ReportLab PDF artifacts
 ```
@@ -67,7 +67,8 @@ Your existing `.venv` remains the uv environment. The npm command creates the ro
 5. Put the encryption key in `KEY_ENCRYPTION_SECRET`. Do not put provider LLM keys in either env file.
 6. Create a Supabase project and apply [the core migration](supabase/migrations/202607170001_micromanus_core.sql), followed by [the Razorpay migration](supabase/migrations/202607180001_razorpay_billing.sql).
 7. Enable Google and/or GitHub in Supabase Auth. Add `http://localhost:3000/api/auth/callback` locally and the production equivalent to Supabase's redirect allow-list.
-8. Add a Brave Search API key to the web service so deployed research runs have internet search.
+8. Add `TAVILY_SEARCH_API_KEY` to the web service for internet research. Brave remains available as an
+   optional fallback through `BRAVE_SEARCH_API_KEY`; Tavily is preferred when both are configured.
 9. Create a Razorpay test-mode account. Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and a separate `RAZORPAY_WEBHOOK_SECRET`.
 10. Keep `RAZORPAY_AMOUNT_SUBUNITS=500` and `RAZORPAY_CURRENCY=USD` for the assignment's exact $5 price. An Indian Razorpay account must have International Payments enabled before the same USD order can go live.
 

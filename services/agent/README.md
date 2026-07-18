@@ -47,11 +47,11 @@ X-User-Id: <id asserted by the authenticated web server>
 Production startup fails if the internal service token is absent. `ALLOW_INSECURE_DEV_AUTH` is false by
 default and cannot be enabled in production.
 
-OpenAI, Anthropic, Kimi, and Brave keys are accepted only inside one chat request as Pydantic `SecretStr`
-values. They are used to construct short-lived clients and are not added to graph state, checkpoints,
-artifacts, events, settings, or logs. The validation-error handler also removes invalid input values, which
-prevents a malformed key from being echoed in a 422 response. There are intentionally no provider-key
-environment variables.
+OpenAI, Anthropic, Kimi, Tavily, and Brave keys are accepted only inside one chat request as Pydantic
+`SecretStr` values. They are used to construct short-lived clients and are not added to graph state,
+checkpoints, artifacts, events, settings, or logs. The validation-error handler also removes invalid input
+values, which prevents a malformed key from being echoed in a 422 response. There are intentionally no
+provider-key environment variables.
 
 Custom OpenAI-compatible endpoints must use public HTTPS on port 443, without URL credentials, query, or
 fragment. This prevents a caller from turning the agent into an internal-network/metadata proxy. The fetch
@@ -135,15 +135,16 @@ Content type is JSON; response content type is `text/event-stream`.
   "credentials": {
     "api_key": "<user BYOK key>",
     "base_url": "https://api.openai.com/v1",
-    "brave_api_key": "<user/server Brave key forwarded for this run>"
+    "tavily_api_key": "<server Tavily key forwarded for this run>"
   },
   "max_iterations": 6
 }
 ```
 
 `base_url` is optional. It defaults to the selected provider's official endpoint. A Kimi key uses its
-OpenAI-compatible Chat Completions endpoint. `brave_api_key` is optional, but without it `web_search`
-returns a safe `search_not_configured` observation; direct public URLs can still be fetched.
+OpenAI-compatible Chat Completions endpoint. `tavily_api_key` and `brave_api_key` are optional; Tavily is
+preferred when both are present. Without either key, `web_search` returns a safe
+`search_not_configured` observation, while direct public URLs can still be fetched.
 
 OpenAI and Kimi reuse stable prompt prefixes and receive automatic provider-side prompt caching. Anthropic
 receives an explicit ephemeral cache breakpoint on the stable research system prompt. No cross-user local
@@ -267,7 +268,7 @@ cross-user artifact isolation.
   reservation if the stream fails before billable usage is committed.
 - Artifact download is proxied by the web server (or it forwards both protected headers); the relative
   `download_url` is intentionally not a public bearer URL.
-- Brave Search quota and model-provider charges belong to the keys forwarded for that run. Search-call fees
-  are not included in token cost because Brave plans are not token-priced.
+- Tavily/Brave Search quota and model-provider charges belong to the keys forwarded for that run.
+  Search-call fees are not included in token cost because they are not model-token charges.
 - Model pricing changes over time. Update the versioned registry and the web billing table together; never
   silently edit an already-used version.

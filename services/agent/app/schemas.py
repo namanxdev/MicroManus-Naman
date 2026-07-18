@@ -28,6 +28,7 @@ class ProviderCredentials(BaseModel):
 
     api_key: SecretStr = Field(min_length=8, repr=False)
     base_url: HttpUrl | None = None
+    tavily_api_key: SecretStr | None = Field(default=None, min_length=8, repr=False)
     brave_api_key: SecretStr | None = Field(default=None, min_length=8, repr=False)
 
 

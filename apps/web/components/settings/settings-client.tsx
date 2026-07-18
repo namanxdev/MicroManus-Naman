@@ -187,7 +187,7 @@ export function SettingsClient() {
             })}
             <div className="search-provider-row">
               <span className="provider-monogram"><GlobeIcon size={17} /></span>
-              <span><strong>Brave Search</strong><small>Managed by deployment</small></span>
+              <span><strong>Tavily Search</strong><small>Managed by deployment</small></span>
               <span className="server-label">SERVER</span>
             </div>
           </aside>

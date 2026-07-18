@@ -568,6 +568,9 @@ export async function POST(request: Request) {
           credentials: {
             api_key: credential.apiKey,
             ...(credential.baseUrl ? { base_url: credential.baseUrl } : {}),
+            ...(process.env.TAVILY_SEARCH_API_KEY
+              ? { tavily_api_key: process.env.TAVILY_SEARCH_API_KEY }
+              : {}),
             ...(process.env.BRAVE_SEARCH_API_KEY ? { brave_api_key: process.env.BRAVE_SEARCH_API_KEY } : {}),
           },
           max_iterations: maxIterations,
