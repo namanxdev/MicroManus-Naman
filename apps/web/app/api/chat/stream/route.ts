@@ -490,6 +490,11 @@ export async function POST(request: Request) {
     await requireResearchAccess(user.id);
     const body = await readJsonObject(request, 128 * 1024);
     const message = asTrimmedString(body.message, "message", { min: 1, max: 30_000 })!;
+    const rawWebSearchEnabled = body.webSearchEnabled ?? body.web_search_enabled;
+    if (rawWebSearchEnabled !== undefined && typeof rawWebSearchEnabled !== "boolean") {
+      throw new ApiError(400, "INVALID_WEB_SEARCH_SETTING", "webSearchEnabled must be a boolean");
+    }
+    const webSearchEnabled = rawWebSearchEnabled !== false;
     const rawThreadId = body.threadId ?? body.thread_id;
     const requestedThreadId = typeof rawThreadId === "string" && rawThreadId.startsWith("research-")
       ? undefined
@@ -565,13 +570,16 @@ export async function POST(request: Request) {
           thread_id: thread.id,
           message,
           model: `${provider}/${model}`,
+          web_search_enabled: webSearchEnabled,
           credentials: {
             api_key: credential.apiKey,
             ...(credential.baseUrl ? { base_url: credential.baseUrl } : {}),
-            ...(process.env.TAVILY_SEARCH_API_KEY
+            ...(webSearchEnabled && process.env.TAVILY_SEARCH_API_KEY
               ? { tavily_api_key: process.env.TAVILY_SEARCH_API_KEY }
               : {}),
-            ...(process.env.BRAVE_SEARCH_API_KEY ? { brave_api_key: process.env.BRAVE_SEARCH_API_KEY } : {}),
+            ...(webSearchEnabled && process.env.BRAVE_SEARCH_API_KEY
+              ? { brave_api_key: process.env.BRAVE_SEARCH_API_KEY }
+              : {}),
           },
           max_iterations: maxIterations,
         }),

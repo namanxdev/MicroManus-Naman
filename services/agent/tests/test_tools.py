@@ -5,8 +5,9 @@ import pytest
 import respx
 
 from app.config import Settings
+from app.reports import ReportService
 from app.schemas import ProviderCredentials
-from app.tools import TavilySearchClient, ToolFailure
+from app.tools import RunEvidence, TavilySearchClient, ToolFailure, build_research_tools
 
 
 def _settings() -> Settings:
@@ -83,3 +84,38 @@ def test_tavily_key_is_kept_secret_in_request_credentials() -> None:
     assert credentials.tavily_api_key is not None
     assert credentials.tavily_api_key.get_secret_value() == "tvly-test-secret"
     assert "tvly-test-secret" not in repr(credentials)
+
+
+def test_disabling_web_search_removes_all_network_tools(tmp_path) -> None:
+    tools = build_research_tools(
+        credentials=ProviderCredentials(
+            api_key="provider-test-secret",
+            tavily_api_key="tvly-test-secret",
+        ),
+        settings=_settings(),
+        evidence=RunEvidence(max_sources=5),
+        reports=ReportService(tmp_path),
+        owner_namespace="test-owner",
+        web_search_enabled=False,
+    )
+
+    assert [tool.name for tool in tools] == ["create_pdf_report"]
+
+
+def test_web_search_is_enabled_by_default(tmp_path) -> None:
+    tools = build_research_tools(
+        credentials=ProviderCredentials(
+            api_key="provider-test-secret",
+            tavily_api_key="tvly-test-secret",
+        ),
+        settings=_settings(),
+        evidence=RunEvidence(max_sources=5),
+        reports=ReportService(tmp_path),
+        owner_namespace="test-owner",
+    )
+
+    assert [tool.name for tool in tools] == [
+        "web_search",
+        "fetch_url",
+        "create_pdf_report",
+    ]

@@ -1,5 +1,5 @@
 {
-  "version": "2026-07-17.1",
+  "version": "2026-07-18.1",
   "currency": "USD",
   "unit_tokens": 1000000,
   "models": [
@@ -35,6 +35,54 @@
       "context_window": 1050000,
       "rates": [{"effective_from": "2026-07-01", "input": "1.00", "cache_read": "0.10", "cache_write": "1.25", "output": "6.00"}],
       "source_urls": ["https://developers.openai.com/api/docs/models/gpt-5.6-luna"]
+    },
+    {
+      "id": "openai/gpt-5.4-mini",
+      "provider": "openai",
+      "api_model": "gpt-5.4-mini",
+      "label": "GPT-5.4 mini",
+      "description": "Strong lower-cost OpenAI model for agentic research and subagents.",
+      "default_base_url": "https://api.openai.com/v1",
+      "context_window": 400000,
+      "rates": [{"effective_from": "2026-03-17", "input": "0.75", "cache_read": "0.075", "cache_write": "0.75", "output": "4.50"}],
+      "pricing_notes": "Cache population is billed at the normal input rate; OpenAI lists no separate cache-write surcharge.",
+      "source_urls": ["https://developers.openai.com/api/docs/models/gpt-5.4-mini", "https://developers.openai.com/api/docs/pricing", "https://developers.openai.com/api/docs/guides/prompt-caching"]
+    },
+    {
+      "id": "openai/gpt-5.4-nano",
+      "provider": "openai",
+      "api_model": "gpt-5.4-nano",
+      "label": "GPT-5.4 nano",
+      "description": "Fast, inexpensive OpenAI model for simpler high-volume research tasks.",
+      "default_base_url": "https://api.openai.com/v1",
+      "context_window": 400000,
+      "rates": [{"effective_from": "2026-03-17", "input": "0.20", "cache_read": "0.02", "cache_write": "0.20", "output": "1.25"}],
+      "pricing_notes": "Cache population is billed at the normal input rate; OpenAI lists no separate cache-write surcharge.",
+      "source_urls": ["https://developers.openai.com/api/docs/models/gpt-5.4-nano", "https://developers.openai.com/api/docs/pricing", "https://developers.openai.com/api/docs/guides/prompt-caching"]
+    },
+    {
+      "id": "openai/gpt-5-mini",
+      "provider": "openai",
+      "api_model": "gpt-5-mini",
+      "label": "GPT-5 mini",
+      "description": "Low-cost OpenAI reasoning model for well-defined research tasks.",
+      "default_base_url": "https://api.openai.com/v1",
+      "context_window": 400000,
+      "rates": [{"effective_from": "2025-08-07", "input": "0.25", "cache_read": "0.025", "cache_write": "0.25", "output": "2.00"}],
+      "pricing_notes": "Cache population is billed at the normal input rate; OpenAI lists no separate cache-write surcharge.",
+      "source_urls": ["https://developers.openai.com/api/docs/models/gpt-5-mini", "https://developers.openai.com/api/docs/guides/prompt-caching"]
+    },
+    {
+      "id": "openai/gpt-5-nano",
+      "provider": "openai",
+      "api_model": "gpt-5-nano",
+      "label": "GPT-5 nano",
+      "description": "OpenAI's lowest-cost GPT-5 option for lightweight, precise tasks.",
+      "default_base_url": "https://api.openai.com/v1",
+      "context_window": 400000,
+      "rates": [{"effective_from": "2025-08-07", "input": "0.05", "cache_read": "0.005", "cache_write": "0.05", "output": "0.40"}],
+      "pricing_notes": "Cache population is billed at the normal input rate; OpenAI lists no separate cache-write surcharge.",
+      "source_urls": ["https://developers.openai.com/api/docs/models/gpt-5-nano", "https://developers.openai.com/api/docs/guides/prompt-caching"]
     },
     {
       "id": "anthropic/claude-fable-5",

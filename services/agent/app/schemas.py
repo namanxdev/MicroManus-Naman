@@ -39,6 +39,7 @@ class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=30_000)
     model: str = Field(min_length=3, max_length=128)
     credentials: ProviderCredentials = Field(repr=False)
+    web_search_enabled: bool = Field(default=True, strict=True)
     max_iterations: int | None = Field(default=None, ge=1, le=20)
 
     @field_validator("message")

@@ -2099,6 +2099,50 @@ svg {
 .composer .model-select select { min-height: 27px; max-width: 150px; }
 .tool-badge { min-height: 29px; font-size: 8px; }
 
+.tool-toggle {
+  display: inline-flex;
+  min-height: 29px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 8px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+
+.tool-toggle:hover:not(:disabled) { border-color: var(--line-strong); color: var(--ink); }
+.tool-toggle:focus-visible { outline: 2px solid var(--signal-deep); outline-offset: 2px; }
+.tool-toggle:disabled { cursor: not-allowed; opacity: .62; }
+.tool-toggle--active { border-color: var(--signal-deep); background: rgba(222, 255, 71, .13); color: var(--ink); }
+
+.tool-toggle__track {
+  position: relative;
+  width: 20px;
+  height: 11px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--paper-raised);
+}
+
+.tool-toggle__track i {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.tool-toggle--active .tool-toggle__track i { transform: translateX(9px); background: var(--signal-deep); }
+
 .send-button {
   display: grid;
   width: 34px;
@@ -2486,6 +2530,7 @@ svg {
   .composer { padding-right: 9px; padding-left: 11px; box-shadow: 4px 5px 0 rgba(32,34,29,.08); }
   .tool-badge--desktop { display: none; }
   .tool-badge { padding: 0 7px; }
+  .tool-toggle { padding: 0 7px; }
   .composer .model-select select { max-width: 118px; }
   .composer-note { display: none; }
 

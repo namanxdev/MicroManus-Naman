@@ -361,14 +361,15 @@ def build_research_tools(
     evidence: RunEvidence,
     reports: ReportService,
     owner_namespace: str,
+    web_search_enabled: bool = True,
 ) -> list[BaseTool]:
-    tavily_secret = credentials.tavily_api_key
+    tavily_secret = credentials.tavily_api_key if web_search_enabled else None
     tavily = (
         TavilySearchClient(tavily_secret.get_secret_value(), settings)
         if tavily_secret is not None
         else None
     )
-    brave_secret = credentials.brave_api_key
+    brave_secret = credentials.brave_api_key if web_search_enabled else None
     brave = (
         BraveSearchClient(brave_secret.get_secret_value(), settings)
         if brave_secret is not None
@@ -466,4 +467,6 @@ def build_research_tools(
                 }
             )
 
+    if not web_search_enabled:
+        return [create_pdf_report]
     return [web_search, fetch_url, create_pdf_report]

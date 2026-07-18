@@ -107,9 +107,10 @@ Public liveness response after checkpoint and registry initialization:
 Returns the curated model catalog, active rate period, context window, provider, and pricing registry
 version. Stable UI ids use `provider/api-model`, for example `openai/gpt-5.6-terra`.
 
-The bundled 2026-07-17 catalog contains:
+The bundled 2026-07-18 catalog contains:
 
-- OpenAI: `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`
+- OpenAI: `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.4-mini`,
+  `gpt-5.4-nano`, `gpt-5-mini`, `gpt-5-nano`
 - Anthropic: `claude-fable-5`, `claude-opus-4-8`, `claude-sonnet-5`,
   `claude-haiku-4-5`
 - Kimi: `kimi-k3`, `kimi-k2.7-code`, `kimi-k2.6`
@@ -137,6 +138,7 @@ Content type is JSON; response content type is `text/event-stream`.
     "base_url": "https://api.openai.com/v1",
     "tavily_api_key": "<server Tavily key forwarded for this run>"
   },
+  "web_search_enabled": true,
   "max_iterations": 6
 }
 ```
@@ -145,6 +147,8 @@ Content type is JSON; response content type is `text/event-stream`.
 OpenAI-compatible Chat Completions endpoint. `tavily_api_key` and `brave_api_key` are optional; Tavily is
 preferred when both are present. Without either key, `web_search` returns a safe
 `search_not_configured` observation, while direct public URLs can still be fetched.
+`web_search_enabled` defaults to true. When false, both search and URL-fetch tools are omitted for the
+entire run; report generation remains available.
 
 OpenAI and Kimi reuse stable prompt prefixes and receive automatic provider-side prompt caching. Anthropic
 receives an explicit ephemeral cache breakpoint on the stable research system prompt. No cross-user local

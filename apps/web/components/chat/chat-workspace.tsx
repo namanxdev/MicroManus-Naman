@@ -26,11 +26,9 @@ import {
   ClockIcon,
   CopyIcon,
   FileIcon,
-  GlobeIcon,
   LinkIcon,
   MoreIcon,
   SearchIcon,
-  SparkIcon,
   StopIcon,
 } from "../ui/icons";
 import { AgentTrace, ArtifactList, CitationList, UsageFootnote } from "./agent-trace";
@@ -151,7 +149,7 @@ function ModelSelector({
         {providerGroups.map((provider) => (
           <optgroup key={provider} label={provider}>
             {models.filter((item) => item.provider === provider).map((item) => (
-              <option key={item.id} value={item.id}>{item.name}</option>
+              <option key={item.id} value={item.id}>{item.name} — {item.note}</option>
             ))}
           </optgroup>
         ))}
@@ -166,8 +164,10 @@ function Composer({
   model,
   models,
   running,
+  webSearchEnabled,
   onChange,
   onModelChange,
+  onWebSearchChange,
   onSend,
   onStop,
 }: {
@@ -175,8 +175,10 @@ function Composer({
   model: string;
   models: ModelOption[];
   running: boolean;
+  webSearchEnabled: boolean;
   onChange: (value: string) => void;
   onModelChange: (model: string) => void;
+  onWebSearchChange: (enabled: boolean) => void;
   onSend: () => void;
   onStop: () => void;
 }) {
@@ -209,7 +211,20 @@ function Composer({
         <div className="composer__bar">
           <div className="composer__tools">
             <ModelSelector model={model} models={models} onChange={onModelChange} />
-            <span className="tool-badge"><GlobeIcon size={14} /> Web on</span>
+            <button
+              aria-checked={webSearchEnabled}
+              aria-label={`Web search ${webSearchEnabled ? "on" : "off"}`}
+              className={`tool-toggle ${webSearchEnabled ? "tool-toggle--active" : ""}`}
+              disabled={running}
+              onClick={() => onWebSearchChange(!webSearchEnabled)}
+              role="switch"
+              title={`Turn web search ${webSearchEnabled ? "off" : "on"}`}
+              type="button"
+            >
+              <SearchIcon size={13} />
+              <span>Web search</span>
+              <span aria-hidden="true" className="tool-toggle__track"><i /></span>
+            </button>
             <span className="tool-badge tool-badge--desktop"><FileIcon size={14} /> Reports</span>
           </div>
           {running ? (
@@ -310,6 +325,7 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
   const [listLoading, setListLoading] = useState(true);
   const [pageError, setPageError] = useState("");
   const [running, setRunning] = useState(false);
+  const [webSearchEnabled, setWebSearchEnabled] = useState(true);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -333,7 +349,6 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
   useEffect(() => {
     if (!initialThreadId) return;
     let mounted = true;
-    setThreadLoading(true);
     getJson<{ chat?: ChatThread } | ChatThread>(`/api/chats/${encodeURIComponent(initialThreadId)}`)
       .then((response) => {
         if (!mounted) return;
@@ -468,6 +483,7 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
         threadId: activeThreadId,
         message: prompt,
         model,
+        webSearchEnabled,
         signal: controller.signal,
         onEvent: handleEvent,
       });
@@ -491,6 +507,10 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
 
   function stopResearch() {
     abortRef.current?.abort();
+  }
+
+  function changeWebSearch(enabled: boolean) {
+    setWebSearchEnabled(enabled);
   }
 
   const sidebar = <ThreadList loading={listLoading} threads={threads} />;
@@ -535,10 +555,12 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
           models={modelOptions}
           onChange={setInput}
           onModelChange={setModel}
+          onWebSearchChange={changeWebSearch}
           onSend={() => sendResearch()}
           onStop={stopResearch}
           running={running}
           value={input}
+          webSearchEnabled={webSearchEnabled}
         />
       </div>
     </AppShell>

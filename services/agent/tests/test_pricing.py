@@ -47,3 +47,17 @@ def test_fable_uses_five_minute_cache_write_rate() -> None:
     assert period.cache_write == Decimal("12.50")
     assert period.output == 50
     assert "1-hour" in (model.pricing_notes or "")
+
+
+def test_low_cost_openai_models_have_separate_cached_input_pricing() -> None:
+    registry = PricingRegistry.load()
+    mini = registry.get("openai/gpt-5.4-mini").price_on(date(2026, 7, 18))
+    nano = registry.get("openai/gpt-5-nano").price_on(date(2026, 7, 18))
+
+    assert mini.input == Decimal("0.75")
+    assert mini.cache_read == Decimal("0.075")
+    assert mini.cache_write == Decimal("0.75")
+    assert mini.output == Decimal("4.50")
+    assert nano.input == Decimal("0.05")
+    assert nano.cache_read == Decimal("0.005")
+    assert nano.output == Decimal("0.40")

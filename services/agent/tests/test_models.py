@@ -29,3 +29,7 @@ def test_native_endpoints_keep_native_model_ids() -> None:
     definition = PricingRegistry.load().get("openai/gpt-5.6-luna")
 
     assert _model_for_endpoint(definition, "https://api.openai.com/v1") == "gpt-5.6-luna"
+
+    economical = PricingRegistry.load().get("openai/gpt-5-nano")
+    assert _model_for_endpoint(economical, "https://api.openai.com/v1") == "gpt-5-nano"
+    assert _model_for_endpoint(economical, "https://openrouter.ai/api/v1") == "openai/gpt-5-nano"

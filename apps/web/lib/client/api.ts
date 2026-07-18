@@ -45,6 +45,7 @@ interface StreamOptions {
   threadId?: string;
   message: string;
   model: string;
+  webSearchEnabled: boolean;
   signal?: AbortSignal;
   onEvent: (event: StreamEvent) => void;
 }
@@ -195,6 +196,7 @@ export async function runResearchStream(options: StreamOptions) {
     threadId: options.threadId,
     message: options.message,
     model: options.model,
+    webSearchEnabled: options.webSearchEnabled,
   };
 
   const request = async (url: string) => {

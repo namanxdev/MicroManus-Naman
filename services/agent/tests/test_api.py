@@ -1,9 +1,12 @@
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from app.config import Settings
 from app.main import create_app
+from app.schemas import ChatRequest, ProviderCredentials
 
 
 def _settings(tmp_path: Path) -> Settings:
@@ -24,7 +27,7 @@ def test_health_and_models_are_self_describing(tmp_path: Path) -> None:
     assert health.status_code == 200
     assert health.json()["status"] == "ok"
     assert models.status_code == 200
-    assert len(models.json()["models"]) >= 9
+    assert len(models.json()["models"]) >= 14
 
 
 def test_protected_routes_require_internal_auth(tmp_path: Path) -> None:
@@ -55,6 +58,19 @@ def test_validation_response_never_echoes_provider_key(tmp_path: Path) -> None:
         )
     assert response.status_code == 422
     assert secret not in response.text
+
+
+def test_web_search_flag_defaults_on_and_requires_a_real_boolean() -> None:
+    payload = {
+        "thread_id": "thread-1",
+        "message": "hello",
+        "model": "openai/gpt-5-nano",
+        "credentials": ProviderCredentials(api_key="provider-test-secret"),
+    }
+
+    assert ChatRequest(**payload).web_search_enabled is True
+    with pytest.raises(ValidationError):
+        ChatRequest(**payload, web_search_enabled="false")
 
 
 def test_report_download_is_isolated_by_user(tmp_path: Path) -> None:

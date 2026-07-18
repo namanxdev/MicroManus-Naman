@@ -10,7 +10,7 @@ No LLM key is bundled with the application. Provider keys are supplied by each u
 - Idempotent `SID_DRDROID` redemption and Razorpay Standard Checkout ($5 → 5 credits)
 - Encrypted BYOK settings for OpenAI, Anthropic, Kimi, and HTTPS OpenAI-compatible endpoints
 - Persistent chats with same-thread LangGraph checkpoints
-- A bounded think → tool → observe research loop with Tavily or Brave Search and safe page/PDF fetching
+- A bounded think → tool → observe research loop with user-controlled Web Search and safe page/PDF fetching
 - Authenticated PDF report artifacts
 - Cache-aware usage billing split across input, output, cache-read, and cache-write tokens
 - Per-chat cost analytics and CSV export
@@ -65,7 +65,7 @@ Your existing `.venv` remains the uv environment. The npm command creates the ro
 3. Generate two unrelated secrets: a long service token and a 32-byte base64 encryption key.
 4. Set the same service token as `MICROMANUS_AGENT_SERVICE_TOKEN` in the agent and `AGENT_SERVICE_TOKEN` in the web app.
 5. Put the encryption key in `KEY_ENCRYPTION_SECRET`. Do not put provider LLM keys in either env file.
-6. Create a Supabase project and apply [the core migration](supabase/migrations/202607170001_micromanus_core.sql), followed by [the Razorpay migration](supabase/migrations/202607180001_razorpay_billing.sql).
+6. Create a Supabase project and apply [the core migration](supabase/migrations/202607170001_micromanus_core.sql), followed by [the Razorpay migration](supabase/migrations/202607180001_razorpay_billing.sql) and [the expanded OpenAI catalog migration](supabase/migrations/202607180002_expand_openai_model_catalog.sql).
 7. Enable Google and/or GitHub in Supabase Auth. Add `http://localhost:3000/api/auth/callback` locally and the production equivalent to Supabase's redirect allow-list.
 8. Add `TAVILY_SEARCH_API_KEY` to the web service for internet research. Brave remains available as an
    optional fallback through `BRAVE_SEARCH_API_KEY`; Tavily is preferred when both are configured.
@@ -154,12 +154,12 @@ Use a fresh social account and verify this exact sequence:
 
 ## Model and pricing policy
 
-The curated catalog currently contains GPT-5.6 Sol/Terra/Luna; Claude Fable 5, Opus 4.8, Sonnet 5, and Haiku 4.5; and Kimi K3, K2.7 Code, and K2.6. The Python registry and Supabase pricing rows are versioned. Claude Sonnet 5's introductory rate automatically rolls to its published standard rate on September 1, 2026.
+The curated catalog currently contains GPT-5.6 Sol/Terra/Luna plus the lower-cost GPT-5.4 mini, GPT-5.4 nano, GPT-5 mini, and GPT-5 nano; Claude Fable 5, Opus 4.8, Sonnet 5, and Haiku 4.5; and Kimi K3, K2.7 Code, and K2.6. The Python registry and Supabase pricing rows are versioned. Claude Sonnet 5's introductory rate automatically rolls to its published standard rate on September 1, 2026.
 
 Pricing is an operational input, so verify provider pages before a production launch and update both registries together:
 
 - `services/agent/app/registry/pricing.v1.json`
-- `supabase/migrations/202607170001_micromanus_core.sql` (or a new production migration)
+- `supabase/migrations/202607170001_micromanus_core.sql` plus additive production migrations
 
 ## Verification
 
