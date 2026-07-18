@@ -71,6 +71,11 @@ Your existing `.venv` remains the uv environment. The npm command creates the ro
 9. Create a Razorpay test-mode account. Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and a separate `RAZORPAY_WEBHOOK_SECRET`.
 10. Keep `RAZORPAY_AMOUNT_SUBUNITS=500` and `RAZORPAY_CURRENCY=USD` for the assignment's exact $5 price. An Indian Razorpay account must have International Payments enabled before the same USD order can go live.
 
+For OpenAI directly, save the user key in **Settings → OpenAI / compatible** with
+`https://api.openai.com/v1`. For OpenRouter, use the same encrypted settings slot with
+`https://openrouter.ai/api/v1`; MicroManus translates catalog models to OpenRouter's required
+provider-qualified slugs before each request. Never place either LLM key in an env file.
+
 Generate safe values without installing another package:
 
 ```bash
