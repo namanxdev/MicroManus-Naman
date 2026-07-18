@@ -1,11 +1,11 @@
 import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
+import RazorpayClient from "razorpay";
 
 import { ApiError } from "./api-error";
 import { requiredEnv } from "./env";
 
-const RAZORPAY_API_URL = "https://api.razorpay.com/v1";
 const ORDER_ID_PATTERN = /^order_[A-Za-z0-9]{8,64}$/;
 const PAYMENT_ID_PATTERN = /^pay_[A-Za-z0-9]{8,64}$/;
 const SIGNATURE_PATTERN = /^[a-f0-9]{64}$/i;
@@ -49,8 +49,8 @@ export function razorpayKeyId(): string {
 export function razorpayPrice(): RazorpayPrice {
   const rawAmount = requiredEnv("RAZORPAY_AMOUNT_SUBUNITS");
   const amount = Number(rawAmount);
-  if (!Number.isSafeInteger(amount) || amount <= 0 || amount > 100_000_000) {
-    throw new Error("RAZORPAY_AMOUNT_SUBUNITS must be a positive safe integer");
+  if (!Number.isSafeInteger(amount) || amount < 100 || amount > 100_000_000) {
+    throw new Error("RAZORPAY_AMOUNT_SUBUNITS must be an integer of at least 100");
   }
 
   const currency = requiredEnv("RAZORPAY_CURRENCY").toUpperCase();
@@ -72,48 +72,31 @@ export function razorpayPrice(): RazorpayPrice {
   return { amount, currency, displayAmount, credits: 5 };
 }
 
-function providerError(body: unknown): string {
-  if (!body || typeof body !== "object") return "Razorpay rejected the request";
-  const error = (body as { error?: unknown }).error;
+function providerError(error: unknown): string {
   if (!error || typeof error !== "object") return "Razorpay rejected the request";
-  const description = (error as { description?: unknown }).description;
+  const details = (error as { error?: unknown }).error;
+  if (!details || typeof details !== "object") return "Razorpay rejected the request";
+  const description = (details as { description?: unknown }).description;
   return typeof description === "string" && description.trim()
     ? description.trim()
     : "Razorpay rejected the request";
 }
 
-async function razorpayRequest<T>(path: string, init: RequestInit): Promise<T> {
+function razorpayClient(): RazorpayClient {
   const { keyId, keySecret } = credentials();
-  const headers = new Headers(init.headers);
-  headers.set("Accept", "application/json");
-  headers.set("Authorization", `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`);
-  if (init.body) headers.set("Content-Type", "application/json");
-
-  let response: Response;
-  try {
-    response = await fetch(`${RAZORPAY_API_URL}${path}`, {
-      ...init,
-      headers,
-      cache: "no-store",
-      signal: AbortSignal.timeout(15_000),
-    });
-  } catch {
-    throw new ApiError(502, "PAYMENT_PROVIDER_UNAVAILABLE", "Razorpay is temporarily unavailable");
-  }
-
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch {
-    body = null;
-  }
-  if (!response.ok) {
-    throw new ApiError(502, "PAYMENT_PROVIDER_ERROR", providerError(body));
-  }
-  return body as T;
+  return new RazorpayClient({ key_id: keyId, key_secret: keySecret });
 }
 
-function assertOrder(order: RazorpayOrder): RazorpayOrder {
+async function razorpayOperation<T>(operation: (client: RazorpayClient) => Promise<T>): Promise<T> {
+  try {
+    return await operation(razorpayClient());
+  } catch (error) {
+    throw new ApiError(500, "PAYMENT_PROVIDER_ERROR", providerError(error));
+  }
+}
+
+function assertOrder(value: unknown): RazorpayOrder {
+  const order = value as RazorpayOrder;
   if (
     !order
     || !ORDER_ID_PATTERN.test(order.id)
@@ -126,7 +109,8 @@ function assertOrder(order: RazorpayOrder): RazorpayOrder {
   return order;
 }
 
-function assertPayment(payment: RazorpayPayment): RazorpayPayment {
+function assertPayment(value: unknown): RazorpayPayment {
+  const payment = value as RazorpayPayment;
   if (
     !payment
     || !PAYMENT_ID_PATTERN.test(payment.id)
@@ -144,20 +128,17 @@ export async function createRazorpayOrder(input: {
   receipt: string;
   price: RazorpayPrice;
 }): Promise<RazorpayOrder> {
-  const order = await razorpayRequest<RazorpayOrder>("/orders", {
-    method: "POST",
-    body: JSON.stringify({
-      amount: input.price.amount,
-      currency: input.price.currency,
-      receipt: input.receipt,
-      partial_payment: false,
-      notes: {
-        product: "micromanus_credits",
-        user_id: input.userId,
-        credits: String(input.price.credits),
-      },
-    }),
-  });
+  const order = await razorpayOperation((client) => client.orders.create({
+    amount: input.price.amount,
+    currency: input.price.currency,
+    receipt: input.receipt,
+    partial_payment: false,
+    notes: {
+      product: "micromanus_credits",
+      user_id: input.userId,
+      credits: String(input.price.credits),
+    },
+  }));
   return assertOrder(order);
 }
 
@@ -165,10 +146,7 @@ export async function fetchRazorpayPayment(paymentId: string): Promise<RazorpayP
   if (!PAYMENT_ID_PATTERN.test(paymentId)) {
     throw new ApiError(400, "INVALID_PAYMENT_ID", "Razorpay payment ID is invalid");
   }
-  return assertPayment(await razorpayRequest<RazorpayPayment>(
-    `/payments/${encodeURIComponent(paymentId)}`,
-    { method: "GET" },
-  ));
+  return assertPayment(await razorpayOperation((client) => client.payments.fetch(paymentId)));
 }
 
 export async function captureRazorpayPayment(
@@ -179,9 +157,8 @@ export async function captureRazorpayPayment(
   if (!PAYMENT_ID_PATTERN.test(paymentId)) {
     throw new ApiError(400, "INVALID_PAYMENT_ID", "Razorpay payment ID is invalid");
   }
-  return assertPayment(await razorpayRequest<RazorpayPayment>(
-    `/payments/${encodeURIComponent(paymentId)}/capture`,
-    { method: "POST", body: JSON.stringify({ amount, currency }) },
+  return assertPayment(await razorpayOperation(
+    (client) => client.payments.capture(paymentId, amount, currency),
   ));
 }
 
