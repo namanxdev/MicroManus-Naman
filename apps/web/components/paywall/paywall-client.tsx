@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
-import { ApiError, getJson, postJson } from "../../lib/client/api";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { getJson, postJson } from "../../lib/client/api";
 import { Brand } from "../ui/brand";
 import {
   ArrowUpRightIcon,
@@ -18,42 +18,120 @@ type Status = "idle" | "checking" | "submitting" | "success";
 interface BillingStatus {
   active: boolean;
   credits: number;
-  method?: "coupon" | "stripe";
+  method?: "coupon" | "stripe" | "razorpay";
 }
 
-export function PaywallClient() {
+interface CheckoutOrder {
+  keyId: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+  displayAmount: string;
+  description: string;
+  prefill?: { email?: string; name?: string };
+}
+
+interface RazorpaySuccess {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayFailure {
+  error?: { description?: string };
+}
+
+interface RazorpayCheckout {
+  open(): void;
+  on(event: "payment.failed", handler: (response: RazorpayFailure) => void): void;
+}
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: Record<string, unknown>) => RazorpayCheckout;
+  }
+}
+
+let checkoutScriptPromise: Promise<void> | null = null;
+
+function loadRazorpayCheckout(): Promise<void> {
+  if (window.Razorpay) return Promise.resolve();
+  if (checkoutScriptPromise) return checkoutScriptPromise;
+
+  const pending = new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>("script[data-micromanus-razorpay]");
+    const script = existing || document.createElement("script");
+    const handleLoad = () => {
+      if (window.Razorpay) {
+        resolve();
+      } else {
+        script.remove();
+        reject(new Error("Razorpay Checkout did not initialize."));
+      }
+    };
+    const handleError = () => {
+      script.remove();
+      reject(new Error("Could not load Razorpay Checkout."));
+    };
+    script.addEventListener("load", handleLoad, { once: true });
+    script.addEventListener("error", handleError, { once: true });
+    if (!existing) {
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.dataset.micromanusRazorpay = "true";
+      document.head.appendChild(script);
+    }
+  });
+  const tracked = pending.catch((caught) => {
+    checkoutScriptPromise = null;
+    throw caught;
+  });
+  checkoutScriptPromise = tracked;
+  return tracked;
+}
+
+export function PaywallClient({
+  paymentCurrency,
+  paymentDisplayAmount,
+}: {
+  paymentCurrency: string;
+  paymentDisplayAmount: string;
+}) {
   const router = useRouter();
   const [coupon, setCoupon] = useState("");
   const [couponStatus, setCouponStatus] = useState<Status>("idle");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
+  const checkoutRequestId = useRef<string | null>(null);
+
+  function getCheckoutRequestId() {
+    if (checkoutRequestId.current) return checkoutRequestId.current;
+    const stored = window.sessionStorage.getItem("micromanus:checkout-request");
+    const value = stored && /^[a-zA-Z0-9:_-]{8,128}$/.test(stored)
+      ? stored
+      : crypto.randomUUID();
+    checkoutRequestId.current = value;
+    window.sessionStorage.setItem("micromanus:checkout-request", value);
+    return value;
+  }
+
+  function clearCheckoutRequestId() {
+    checkoutRequestId.current = null;
+    window.sessionStorage.removeItem("micromanus:checkout-request");
+  }
 
   useEffect(() => {
     let active = true;
-    const checkoutState = new URLSearchParams(window.location.search).get("checkout");
-    if (checkoutState === "cancelled") {
-      setError("Checkout was cancelled. No charge was made.");
-    }
 
     async function checkAccess() {
-      const attempts = checkoutState === "success" ? 6 : 1;
-      for (let attempt = 0; attempt < attempts && active; attempt += 1) {
-        try {
-          const status = await getJson<BillingStatus>("/api/billing/status");
-          if (status.active && status.credits > 0) {
-            setCouponStatus("success");
-            return;
-          }
-        } catch {
-          break;
+      try {
+        const status = await getJson<BillingStatus>("/api/billing/status");
+        if (status.active && status.credits > 0) {
+          setCouponStatus("success");
         }
-        if (attempt < attempts - 1) {
-          await new Promise<void>((resolve) => window.setTimeout(resolve, 1100));
-        }
-      }
-      if (active && checkoutState === "success") {
-        setError("Payment is confirmed by Stripe and credits are still syncing. Refresh in a moment.");
+      } catch {
+        // The paywall remains usable if a status check is temporarily unavailable.
       }
     }
 
@@ -104,13 +182,60 @@ export function PaywallClient() {
     setError("");
     setCheckoutLoading(true);
     try {
-      const response = await postJson<{ url?: string; error?: string }>(
-        "/api/billing/checkout",
-        {},
-      );
-      if (!response.url) throw new Error(response.error || "Checkout is not available yet.");
-      window.location.assign(response.url);
+      const idempotencyKey = getCheckoutRequestId();
+      const [order] = await Promise.all([
+        postJson<CheckoutOrder>("/api/billing/checkout", { idempotencyKey }),
+        loadRazorpayCheckout(),
+      ]);
+      const Razorpay = window.Razorpay;
+      if (!Razorpay) throw new Error("Razorpay Checkout is unavailable.");
+
+      const checkout = new Razorpay({
+        key: order.keyId,
+        order_id: order.orderId,
+        amount: order.amount,
+        currency: order.currency,
+        name: "MicroManus",
+        description: order.description,
+        prefill: order.prefill,
+        theme: { color: "#e85d31", backdrop_color: "#161512" },
+        modal: {
+          confirm_close: true,
+          ondismiss: () => setCheckoutLoading(false),
+        },
+        handler: async (payment: RazorpaySuccess) => {
+          try {
+            await postJson("/api/billing/verify", payment);
+            clearCheckoutRequestId();
+            setCouponStatus("success");
+          } catch (caught) {
+            for (let attempt = 0; attempt < 6; attempt += 1) {
+              try {
+                const status = await getJson<BillingStatus>("/api/billing/status");
+                if (status.active && status.credits > 0) {
+                  setCouponStatus("success");
+                  return;
+                }
+              } catch {
+                // Retry while the signed webhook finishes processing.
+              }
+              await new Promise<void>((resolve) => window.setTimeout(resolve, 1100));
+            }
+            setError(caught instanceof Error
+              ? caught.message
+              : "Payment completed, but credit verification is still pending.");
+          } finally {
+            setCheckoutLoading(false);
+          }
+        },
+      });
+      checkout.on("payment.failed", (response) => {
+        setError(response.error?.description || "Payment failed. No credits were added.");
+        setCheckoutLoading(false);
+      });
+      checkout.open();
     } catch (caught) {
+      clearCheckoutRequestId();
       setError(caught instanceof Error ? caught.message : "Could not open secure checkout.");
       setCheckoutLoading(false);
     }
@@ -161,7 +286,7 @@ export function PaywallClient() {
           <span className="section-code">ONE-TIME ENTRY</span>
           <h1>Fund the first five investigations.</h1>
           <p className="paywall-lede">
-            MicroManus meters only what your research uses. Start with five dollars in credit,
+            MicroManus meters only what your research uses. Start with five research credits,
             then inspect every model call down to cached tokens.
           </p>
 
@@ -172,7 +297,7 @@ export function PaywallClient() {
               <span>RESEARCH CREDIT</span>
               <SparkIcon size={20} />
             </div>
-            <strong><sup>$</sup>5.00</strong>
+            <strong>{paymentDisplayAmount}</strong>
             <div className="credit-ticket__meta">
               <span>5 credits</span>
               <span>No subscription</span>
@@ -200,7 +325,14 @@ export function PaywallClient() {
           <div className="checkout-option">
             <div className="checkout-option__title">
               <span className="option-index">A</span>
-              <div><strong>Pay $5 securely</strong><small>Card, wallet, or Link via Stripe</small></div>
+              <div>
+                <strong>Pay {paymentDisplayAmount} securely</strong>
+                <small>
+                  {paymentCurrency === "INR"
+                    ? "Card, UPI, or wallet via Razorpay"
+                    : "Available payment methods via Razorpay"}
+                </small>
+              </div>
               <span className="recommended-label">STANDARD</span>
             </div>
             <div className="mini-card" aria-hidden="true">
@@ -217,7 +349,7 @@ export function PaywallClient() {
               {checkoutLoading ? "Opening checkout…" : "Continue to card payment"}
               {!checkoutLoading && <ArrowUpRightIcon size={17} />}
             </button>
-            <p className="secure-note"><ShieldIcon size={14} /> Card details are entered on Stripe, never on MicroManus.</p>
+            <p className="secure-note"><ShieldIcon size={14} /> Payment details are entered on Razorpay, never on MicroManus.</p>
           </div>
 
           <div className="option-divider"><span>OR USE A CODE</span></div>

@@ -2,8 +2,8 @@
 
 1. Create a Supabase project and enable the Google and GitHub providers under **Authentication → Providers**.
 2. Add `https://<your-app>/api/auth/callback` to the Supabase redirect allow-list (and the localhost equivalent for development).
-3. Apply `migrations/202607170001_micromanus_core.sql` with `supabase db push` or the SQL editor.
-4. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only. Browser code should receive only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+3. Apply `migrations/202607170001_micromanus_core.sql`, then `migrations/202607180001_razorpay_billing.sql`, with `supabase db push` or the SQL editor.
+4. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only. Browser code should receive only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` name is also accepted).
 
 The migration creates a private `reports` Storage bucket. Report objects use the path `<user-id>/<thread-id>/<filename>` and are exposed to the browser only through signed URLs.
 

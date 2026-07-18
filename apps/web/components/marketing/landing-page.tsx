@@ -23,9 +23,12 @@ export function LandingPage() {
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get("auth_error");
     if (!code) return;
-    setAuthError(code === "configuration"
-      ? "Authentication is not configured on this deployment yet."
-      : "Social sign-in could not be completed. Please try again.");
+    const timer = window.setTimeout(() => {
+      setAuthError(code === "configuration"
+        ? "Authentication is not configured on this deployment yet."
+        : "Social sign-in could not be completed. Please try again.");
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   function signIn(provider: SocialProvider) {
@@ -227,7 +230,7 @@ export function LandingPage() {
       <section className="price-section" id="pricing">
         <div>
           <span className="section-code">03 / ENTRY</span>
-          <h2>Five dollars. Five credits. Your model keys.</h2>
+          <h2>Five credits. Your model keys. Every cost visible.</h2>
         </div>
         <div className="price-section__action">
           <p>Usage is metered by input, output, and cached tokens—never bundled behind a mystery rate.</p>

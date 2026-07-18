@@ -8,7 +8,7 @@ import { createAdminClient } from "./supabase";
 export interface BillingStatus {
   active: boolean;
   credits: number;
-  method?: "coupon" | "stripe";
+  method?: "coupon" | "stripe" | "razorpay";
   lifetimeGranted: number;
   lifetimeSpent: number;
 }
@@ -26,7 +26,9 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
   return {
     active: Boolean(source),
     credits: Number(walletResult.data?.balance || 0),
-    method: source === "coupon" || source === "stripe" ? source : undefined,
+    method: source === "coupon" || source === "stripe" || source === "razorpay"
+      ? source
+      : undefined,
     lifetimeGranted: Number(walletResult.data?.lifetime_granted || 0),
     lifetimeSpent: Number(walletResult.data?.lifetime_spent || 0),
   };

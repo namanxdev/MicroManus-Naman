@@ -11,7 +11,10 @@ function supabaseUrl(): string {
 }
 
 function supabaseAnonKey(): string {
-  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || requiredEnv("SUPABASE_ANON_KEY");
+  return process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()
+    || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
+    || process.env.SUPABASE_PUBLISHABLE_KEY?.trim()
+    || requiredEnv("SUPABASE_ANON_KEY");
 }
 
 export async function createSessionClient(): Promise<SupabaseClient> {
@@ -21,7 +24,7 @@ export async function createSessionClient(): Promise<SupabaseClient> {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet, _headers) {
+      setAll(cookiesToSet) {
         try {
           cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
         } catch {
