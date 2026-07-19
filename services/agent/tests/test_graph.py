@@ -136,6 +136,124 @@ async def test_graph_loops_through_tool_and_emits_metered_final(
     assert names[-1] == "done"
 
 
+async def test_report_enabled_guarantees_pdf_when_model_skips_tool(
+    monkeypatch: Any, tmp_path: Path
+) -> None:
+    # The model answers directly and never calls create_pdf_report; the run must still emit a PDF.
+    scripted = ScriptedModel(
+        responses=[
+            AIMessage(
+                content="# Wildfire report\n\nA complete, self-contained researched answer.",
+                usage_metadata={"input_tokens": 120, "output_tokens": 30, "total_tokens": 150},
+            ),
+        ]
+    )
+
+    @tool("test_lookup")
+    async def test_lookup(query: str) -> str:
+        """Unused tool; the model resolves without calling it."""
+
+        return '{"kind":"search_results","results":[]}'
+
+    monkeypatch.setattr(graph_module, "build_chat_model", lambda *args, **kwargs: scripted)
+    monkeypatch.setattr(graph_module, "build_research_tools", lambda *args, **kwargs: [test_lookup])
+
+    settings = Settings(
+        environment="test",
+        service_token="test-service-token",
+        checkpoint_backend="memory",
+        artifact_dir=tmp_path,
+        run_timeout_seconds=30,
+    )
+    registry = PricingRegistry.load()
+    reports = ReportService(tmp_path)
+    agent = ResearchAgent(
+        settings=settings,
+        registry=registry,
+        checkpointer=InMemorySaver(),
+        reports=reports,
+    )
+    request = ChatRequest(
+        thread_id="thread-report",
+        message="Research wildfire prevention",
+        model="openai/gpt-5.6-luna",
+        credentials=ProviderCredentials(api_key="sk-test-provider"),
+        report_enabled=True,
+    )
+    caller = AuthenticatedCaller("user-1")
+    prepared = PreparedRun(
+        request=request,
+        caller=caller,
+        definition=registry.get(request.model),
+        base_url="https://api.openai.com/v1",
+        max_iterations=1,
+    )
+
+    events = [event async for event in agent.stream(prepared)]
+    artifacts = [event.data["artifact"] for event in events if event.event == "artifact"]
+    final = next(event.data for event in events if event.event == "final")
+
+    assert len(artifacts) == 1
+    assert artifacts[0]["download_url"].startswith("/v1/artifacts/")
+    assert len(final["artifacts"]) == 1
+    # The PDF is actually written to disk and resolvable for this owner.
+    assert reports.find(caller.namespace, artifacts[0]["id"]) is not None
+
+
+async def test_report_disabled_emits_no_artifact(monkeypatch: Any, tmp_path: Path) -> None:
+    scripted = ScriptedModel(
+        responses=[
+            AIMessage(
+                content="A direct answer with no report requested.",
+                usage_metadata={"input_tokens": 40, "output_tokens": 8, "total_tokens": 48},
+            ),
+        ]
+    )
+
+    @tool("test_lookup")
+    async def test_lookup(query: str) -> str:
+        """Unused tool."""
+
+        return '{"kind":"search_results","results":[]}'
+
+    monkeypatch.setattr(graph_module, "build_chat_model", lambda *args, **kwargs: scripted)
+    monkeypatch.setattr(graph_module, "build_research_tools", lambda *args, **kwargs: [test_lookup])
+
+    settings = Settings(
+        environment="test",
+        service_token="test-service-token",
+        checkpoint_backend="memory",
+        artifact_dir=tmp_path,
+        run_timeout_seconds=30,
+    )
+    registry = PricingRegistry.load()
+    agent = ResearchAgent(
+        settings=settings,
+        registry=registry,
+        checkpointer=InMemorySaver(),
+        reports=ReportService(tmp_path),
+    )
+    request = ChatRequest(
+        thread_id="thread-no-report",
+        message="Just answer this",
+        model="openai/gpt-5.6-luna",
+        credentials=ProviderCredentials(api_key="sk-test-provider"),
+    )
+    prepared = PreparedRun(
+        request=request,
+        caller=AuthenticatedCaller("user-1"),
+        definition=registry.get(request.model),
+        base_url="https://api.openai.com/v1",
+        max_iterations=1,
+    )
+
+    events = [event async for event in agent.stream(prepared)]
+    final = next(event.data for event in events if event.event == "final")
+
+    assert not any(event.event == "artifact" for event in events)
+    assert final["artifacts"] == []
+
+
 async def test_checkpoint_retains_context_only_for_same_user_thread(
     monkeypatch: Any, tmp_path: Path
 ) -> None:

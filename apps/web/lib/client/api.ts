@@ -46,6 +46,7 @@ interface StreamOptions {
   message: string;
   model: string;
   webSearchEnabled: boolean;
+  reportEnabled: boolean;
   signal?: AbortSignal;
   onEvent: (event: StreamEvent) => void;
 }
@@ -197,6 +198,7 @@ export async function runResearchStream(options: StreamOptions) {
     message: options.message,
     model: options.model,
     webSearchEnabled: options.webSearchEnabled,
+    reportEnabled: options.reportEnabled,
   };
 
   const request = async (url: string) => {

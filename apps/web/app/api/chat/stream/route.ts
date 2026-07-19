@@ -270,30 +270,72 @@ function responseHeaders(): HeadersInit {
   };
 }
 
+async function downloadAgentArtifactBytes(id: string, userId: string): Promise<Buffer | null> {
+  try {
+    const base = new URL(requiredEnv("AGENT_SERVICE_URL"));
+    const url = new URL(`/v1/artifacts/${id}`, `${base.origin}/`);
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${requiredEnv("AGENT_SERVICE_TOKEN")}`,
+        "X-User-Id": userId,
+      },
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    return Buffer.from(await response.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+// Copy each run artifact from the agent's ephemeral disk into durable Supabase storage so the
+// report stays downloadable after the agent restarts or redeploys. Returns durable descriptors
+// (pointing at /api/artifacts/{rowId}) to store in the message metadata.
 async function persistArtifacts(
   userId: string,
   threadId: string,
   messageId: string,
   artifacts: Array<Record<string, unknown>>,
-): Promise<void> {
-  const valid = artifacts.flatMap((artifact) => {
-    const storagePath = textValue(artifact.storagePath, artifact.storage_path);
-    if (!storagePath || !storagePath.startsWith(`${userId}/${threadId}/`)) return [];
-    return [{
-      user_id: userId,
-      thread_id: threadId,
-      message_id: messageId,
-      name: textValue(artifact.name) || "Research report.pdf",
-      kind: "pdf",
-      storage_path: storagePath,
-      content_type: "application/pdf",
-      size_bytes: tokenCount(artifact.size) || null,
-      metadata: artifact,
-    }];
-  });
-  if (!valid.length) return;
-  const { error } = await createAdminClient().from("artifacts").insert(valid);
-  if (error) console.error("Unable to persist report artifacts", { threadId, error: error.message });
+): Promise<Array<Record<string, unknown>>> {
+  const admin = createAdminClient();
+  const durable: Array<Record<string, unknown>> = [];
+  for (const artifact of artifacts) {
+    const agentId = textValue(artifact.id);
+    if (!agentId || !/^[0-9a-f]{32}$/.test(agentId)) continue;
+    const name = textValue(artifact.name) || "Research report.pdf";
+    const storagePath = `${userId}/${threadId}/${agentId}.pdf`;
+    try {
+      const bytes = await downloadAgentArtifactBytes(agentId, userId);
+      if (!bytes) continue;
+      const { error: uploadError } = await admin.storage
+        .from("reports")
+        .upload(storagePath, bytes, { contentType: "application/pdf", upsert: true });
+      if (uploadError) throw new Error(uploadError.message);
+      const { data: row, error: insertError } = await admin
+        .from("artifacts")
+        .insert({
+          user_id: userId,
+          thread_id: threadId,
+          message_id: messageId,
+          name,
+          kind: "pdf",
+          storage_path: storagePath,
+          content_type: "application/pdf",
+          size_bytes: bytes.byteLength,
+          metadata: { title: name, agentArtifactId: agentId },
+        })
+        .select("id")
+        .single();
+      if (insertError || !row) throw new Error(insertError?.message || "artifact row insert failed");
+      durable.push({ id: row.id, name, type: "pdf", url: `/api/artifacts/${row.id}`, size: bytes.byteLength });
+    } catch (error) {
+      console.error("Unable to persist report artifact", {
+        threadId,
+        error: error instanceof Error ? error.message : "unknown error",
+      });
+    }
+  }
+  return durable;
 }
 
 async function finalizeRun(input: {
@@ -306,7 +348,12 @@ async function finalizeRun(input: {
   state: StreamState;
 }) {
   const { state } = input;
-  await persistArtifacts(input.userId, input.threadId, input.assistantMessageId, state.artifacts);
+  const durableArtifacts = await persistArtifacts(
+    input.userId,
+    input.threadId,
+    input.assistantMessageId,
+    state.artifacts,
+  );
 
   const billing = state.usage ? await recordUsageAndDebit({
       userId: input.userId,
@@ -336,7 +383,7 @@ async function finalizeRun(input: {
       runId: state.runId,
       steps: state.steps,
       sources: state.sources,
-      artifacts: state.artifacts,
+      artifacts: durableArtifacts.length ? durableArtifacts : state.artifacts,
       usage,
     },
   });
@@ -497,6 +544,11 @@ export async function POST(request: Request) {
       throw new ApiError(400, "INVALID_WEB_SEARCH_SETTING", "webSearchEnabled must be a boolean");
     }
     const webSearchEnabled = rawWebSearchEnabled !== false;
+    const rawReportEnabled = body.reportEnabled ?? body.report_enabled;
+    if (rawReportEnabled !== undefined && typeof rawReportEnabled !== "boolean") {
+      throw new ApiError(400, "INVALID_REPORT_SETTING", "reportEnabled must be a boolean");
+    }
+    const reportEnabled = rawReportEnabled === true;
     const rawThreadId = body.threadId ?? body.thread_id;
     const requestedThreadId = typeof rawThreadId === "string" && rawThreadId.startsWith("research-")
       ? undefined
@@ -573,6 +625,7 @@ export async function POST(request: Request) {
           message,
           model: `${provider}/${model}`,
           web_search_enabled: webSearchEnabled,
+          report_enabled: reportEnabled,
           credentials: {
             api_key: credential.apiKey,
             ...(credential.baseUrl ? { base_url: credential.baseUrl } : {}),
