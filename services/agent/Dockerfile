@@ -1,24 +1,19 @@
-FROM python:3.12-slim AS runtime
+FROM python:3.12-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+WORKDIR /app
 
-WORKDIR /srv/agent
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml README.md ./
-COPY app ./app
-RUN pip install --no-cache-dir .
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN addgroup --system micromanus \
-    && adduser --system --ingroup micromanus micromanus \
-    && mkdir -p /data/artifacts \
-    && chown -R micromanus:micromanus /data
+COPY . .
 
-USER micromanus
-EXPOSE 8000
+RUN useradd -m -u 1000 user && chown -R user /app
+USER user
 
-ENV MICROMANUS_AGENT_CHECKPOINT_DB_PATH=/data/checkpoints.sqlite \
-    MICROMANUS_AGENT_ARTIFACT_DIR=/data/artifacts
+EXPOSE 7860
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["python", "hf_app.py"]

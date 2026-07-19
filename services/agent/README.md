@@ -3,9 +3,7 @@ title: MicroManus Agent
 emoji: "🔬"
 colorFrom: indigo
 colorTo: blue
-sdk: gradio
-python_version: "3.12"
-app_file: hf_app.py
+sdk: docker
 pinned: false
 suggested_hardware: cpu-basic
 short_description: FastAPI & LangGraph research service for MicroManus
