@@ -22,7 +22,9 @@ import { createAdminClient } from "@/lib/server/supabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 600;
+// Vercel Hobby caps serverless functions at 300 seconds. The upstream agent's
+// run timeout is 180 seconds, leaving enough time to settle usage and close the stream.
+export const maxDuration = 300;
 
 interface NormalizedUsage {
   inputTokens: number;
