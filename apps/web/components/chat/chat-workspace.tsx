@@ -491,6 +491,28 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
     };
   }, []);
 
+  // New chats start from the model saved as the default in Settings, not a hardcoded fallback.
+  useEffect(() => {
+    if (initialThreadId) return;
+    let mounted = true;
+    getJson<{ providers?: Array<{ configured?: boolean; model?: string; updatedAt?: string }> }>(
+      "/api/settings/keys",
+    )
+      .then((response) => {
+        if (!mounted) return;
+        const preferred = (response.providers || [])
+          .filter((provider) => provider.configured && provider.model)
+          .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))[0];
+        if (preferred?.model) setModel(preferred.model);
+      })
+      .catch(() => {
+        // Keep the default model when the saved preference cannot be loaded.
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [initialThreadId]);
+
   useEffect(() => {
     if (!initialThreadId) return;
     let mounted = true;
