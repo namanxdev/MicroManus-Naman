@@ -167,9 +167,11 @@ function Composer({
   models,
   running,
   webSearchEnabled,
+  reportEnabled,
   onChange,
   onModelChange,
   onWebSearchChange,
+  onReportChange,
   onSend,
   onStop,
 }: {
@@ -178,9 +180,11 @@ function Composer({
   models: ModelOption[];
   running: boolean;
   webSearchEnabled: boolean;
+  reportEnabled: boolean;
   onChange: (value: string) => void;
   onModelChange: (model: string) => void;
   onWebSearchChange: (enabled: boolean) => void;
+  onReportChange: (enabled: boolean) => void;
   onSend: () => void;
   onStop: () => void;
 }) {
@@ -227,7 +231,20 @@ function Composer({
               <span>Web search</span>
               <span aria-hidden="true" className="tool-toggle__track"><i /></span>
             </button>
-            <span className="tool-badge tool-badge--desktop"><FileIcon size={14} /> Reports</span>
+            <button
+              aria-checked={reportEnabled}
+              aria-label={`PDF report ${reportEnabled ? "on" : "off"}`}
+              className={`tool-toggle ${reportEnabled ? "tool-toggle--active" : ""}`}
+              disabled={running}
+              onClick={() => onReportChange(!reportEnabled)}
+              role="switch"
+              title={reportEnabled ? "A PDF report will be generated with the answer" : "Turn PDF report on"}
+              type="button"
+            >
+              <FileIcon size={13} />
+              <span>Report</span>
+              <span aria-hidden="true" className="tool-toggle__track"><i /></span>
+            </button>
           </div>
           {running ? (
             <button aria-label="Stop research" className="send-button send-button--stop" onClick={onStop} type="button">
@@ -453,6 +470,7 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
   const [pageError, setPageError] = useState("");
   const [running, setRunning] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(true);
+  const [reportEnabled, setReportEnabled] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -611,6 +629,7 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
         message: prompt,
         model,
         webSearchEnabled,
+        reportEnabled,
         signal: controller.signal,
         onEvent: handleEvent,
       });
@@ -638,6 +657,10 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
 
   function changeWebSearch(enabled: boolean) {
     setWebSearchEnabled(enabled);
+  }
+
+  function changeReport(enabled: boolean) {
+    setReportEnabled(enabled);
   }
 
   const sidebar = <ThreadList loading={listLoading} threads={threads} />;
@@ -702,8 +725,10 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
           onChange={setInput}
           onModelChange={setModel}
           onWebSearchChange={changeWebSearch}
+          onReportChange={changeReport}
           onSend={() => sendResearch()}
           onStop={stopResearch}
+          reportEnabled={reportEnabled}
           running={running}
           value={input}
           webSearchEnabled={webSearchEnabled}
