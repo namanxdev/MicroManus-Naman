@@ -8,7 +8,7 @@ python_version: "3.12"
 app_file: hf_app.py
 pinned: false
 suggested_hardware: cpu-basic
-short_description: Private FastAPI and LangGraph research service for MicroManus
+short_description: FastAPI & LangGraph research service for MicroManus
 ---
 
 # MicroManus research-agent service
