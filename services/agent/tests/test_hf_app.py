@@ -37,7 +37,7 @@ with TestClient(app) as client:
     assert len(models.json()["models"]) >= 1
 """
 
-    completed = subprocess.run(
+    completed = subprocess.run(  # noqa: S603 - fixed interpreter and inline test script
         [sys.executable, "-c", script],
         cwd=service_dir,
         env=environment,

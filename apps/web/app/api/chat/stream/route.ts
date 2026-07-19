@@ -625,7 +625,7 @@ export async function POST(request: Request) {
           message,
           model: `${provider}/${model}`,
           web_search_enabled: webSearchEnabled,
-          report_enabled: reportEnabled,
+          ...(reportEnabled ? { report_enabled: true } : {}),
           credentials: {
             api_key: credential.apiKey,
             ...(credential.baseUrl ? { base_url: credential.baseUrl } : {}),
@@ -653,6 +653,18 @@ export async function POST(request: Request) {
     }
 
     if (!upstream.ok || !upstream.body) {
+      const upstreamCode = upstream.status === 401
+        ? "AGENT_AUTH_MISMATCH"
+        : upstream.status === 422 ? "AGENT_VERSION_MISMATCH" : "AGENT_UNAVAILABLE";
+      const upstreamMessage = upstream.status === 401
+        ? "The research service credentials are out of sync"
+        : upstream.status === 422
+          ? "The research service needs to be updated"
+          : "The research service is unavailable";
+      console.error("Research service rejected a chat request", {
+        status: upstream.status,
+        code: upstreamCode,
+      });
       await updateChatMessage({
         userId: user.id,
         messageId: assistantMessage.id,
@@ -660,7 +672,7 @@ export async function POST(request: Request) {
         status: "error",
         metadata: { upstreamStatus: upstream.status },
       });
-      throw new ApiError(502, "AGENT_UNAVAILABLE", "The research service is unavailable");
+      throw new ApiError(502, upstreamCode, upstreamMessage);
     }
     if (!upstream.headers.get("content-type")?.includes("text/event-stream")) {
       await updateChatMessage({

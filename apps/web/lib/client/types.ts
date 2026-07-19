@@ -45,6 +45,7 @@ export interface ChatMessage {
   citations?: Citation[];
   artifacts?: Artifact[];
   usage?: TokenUsage;
+  error?: string;
 }
 
 export interface ChatThread {
@@ -78,7 +79,7 @@ export type StreamEvent =
   | { type: "citation"; citation: Citation }
   | { type: "artifact"; artifact: Artifact }
   | { type: "usage"; usage: TokenUsage }
-  | { type: "error"; error: string }
+  | { type: "error"; error: string; code?: string }
   | { type: "done" };
 
 export interface UsageSummary {

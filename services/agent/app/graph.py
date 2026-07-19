@@ -434,11 +434,12 @@ def _research_system_message(
 ) -> SystemMessage:
     today = datetime.now(UTC).date().isoformat()
     web_guidance = (
-        "Use web_search for current or uncertain facts and fetch_url for important primary sources. "
-        "Prefer primary, authoritative, and recent sources."
+        "Use web_search for current or uncertain facts and fetch_url for important primary "
+        "sources. Prefer primary, authoritative, and recent sources."
         if web_search_enabled
         else "Web access is disabled for this run. Do not claim to have searched or fetched new "
-        "sources. Use existing conversation context and clearly mark time-sensitive claims as unverified."
+        "sources. Use existing conversation context and clearly mark time-sensitive claims as "
+        "unverified."
     )
     report_guidance = (
         "The user has enabled a downloadable PDF report for this run. Before you finish, call "
@@ -447,7 +448,8 @@ def _research_system_message(
         if report_enabled
         else "Call create_pdf_report only when the user explicitly requests a report/PDF artifact "
         "or when a substantial research deliverable clearly benefits from one. The PDF's markdown "
-        "must be polished and self-contained. The text answer should mention the resulting artifact."
+        "must be polished and self-contained. The text answer should mention the resulting "
+        "artifact."
     )
     prompt = f"""You are MicroManus, a rigorous deep-research agent. Today's date is {today}.
 

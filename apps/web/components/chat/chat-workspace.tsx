@@ -405,9 +405,18 @@ function Conversation({ messages }: { messages: ChatMessage[] }) {
           <article className="assistant-message" key={message.id}>
             <header className="assistant-message__head">
               <span className="assistant-mark"><span /><span /><span /></span>
-              <div><strong>MicroManus</strong><small>{message.status === "streaming" ? "Working" : "Research complete"}</small></div>
+              <div>
+                <strong>MicroManus</strong>
+                <small>
+                  {message.status === "streaming"
+                    ? "Working"
+                    : message.status === "error" ? "Research interrupted" : "Research complete"}
+                </small>
+              </div>
               <span className={`assistant-state assistant-state--${message.status || "complete"}`}>
-                {message.status === "streaming" ? <i /> : <CheckIcon size={12} />}
+                {message.status === "streaming"
+                  ? <i />
+                  : message.status === "error" ? <b aria-label="Failed">!</b> : <CheckIcon size={12} />}
               </span>
             </header>
             <AgentTrace steps={message.steps || []} />
@@ -423,7 +432,9 @@ function Conversation({ messages }: { messages: ChatMessage[] }) {
             )}
             <UsageFootnote usage={message.usage} />
             {message.status === "error" && (
-              <div className="message-error" role="alert">The research run stopped before completion. Check your provider key and try again.</div>
+              <div className="message-error" role="alert">
+                {message.error || "The research run stopped before completion. Try again or check Settings if the problem persists."}
+              </div>
             )}
           </article>
         ),
@@ -639,6 +650,11 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
       if (event.type === "error") {
         streamFailed = true;
         setPageError(event.error);
+        updateAssistant(assistantId, (message) => ({
+          ...message,
+          status: "error",
+          error: event.error,
+        }));
       }
       if (event.type === "done") {
         updateAssistant(assistantId, (message) => ({ ...message, status: streamFailed ? "error" : "complete" }));
@@ -664,8 +680,9 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
           content: message.content || "Research stopped before an answer was produced.",
         }));
       } else {
-        updateAssistant(assistantId, (message) => ({ ...message, status: "error" }));
-        setPageError(error instanceof Error ? error.message : "The research run could not start.");
+        const failure = error instanceof Error ? error.message : "The research run could not start.";
+        updateAssistant(assistantId, (message) => ({ ...message, status: "error", error: failure }));
+        setPageError(failure);
       }
     } finally {
       abortRef.current = null;

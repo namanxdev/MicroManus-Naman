@@ -2202,6 +2202,16 @@ svg {
   animation: breathe 1.5s ease-in-out infinite;
 }
 
+.assistant-state--error {
+  border-color: rgba(154, 62, 49, .35);
+  color: var(--danger);
+}
+
+.assistant-state--error b {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
 .agent-trace {
   margin-bottom: 27px;
   border-top: 1px solid var(--line-strong);
