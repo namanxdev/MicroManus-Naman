@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getJson, postJson } from "../../lib/client/api";
@@ -350,6 +351,9 @@ export function PaywallClient({
               {!checkoutLoading && <ArrowUpRightIcon size={17} />}
             </button>
             <p className="secure-note"><ShieldIcon size={14} /> Payment details are entered on Razorpay, never on MicroManus.</p>
+            <p className="checkout-legal">
+              By paying, you agree to the <Link href="/terms">Terms</Link> and <Link href="/refund-policy">Refund Policy</Link>.
+            </p>
           </div>
 
           <div className="option-divider"><span>OR USE A CODE</span></div>

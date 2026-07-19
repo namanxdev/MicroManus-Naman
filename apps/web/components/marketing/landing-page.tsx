@@ -47,10 +47,10 @@ export function LandingPage() {
           <a href="#artifact">Artifacts</a>
           <a href="#pricing">Pricing</a>
         </div>
-        <button className="text-button" onClick={() => signIn("github")} type="button">
+        <Link className="text-button" href="/sign-in">
           Sign in
           <ArrowUpRightIcon size={16} />
-        </button>
+        </Link>
       </nav>
 
       <section className="landing-hero">
@@ -92,7 +92,7 @@ export function LandingPage() {
                 <GithubIcon size={20} />
               </button>
             </div>
-            <small>No password. Bring an OpenAI-compatible, Anthropic, or Kimi key after signup.</small>
+            <small>Social sign-in by default. Bring an OpenAI-compatible, Anthropic, or Kimi key after signup.</small>
           </div>
 
           <div className="hero-proof reveal" style={{ "--delay": "280ms" } as CSSProperties}>
@@ -244,8 +244,12 @@ export function LandingPage() {
         <Brand inverse />
         <p>Research with a visible chain of work.</p>
         <div>
-          <Link href="/">Privacy</Link>
-          <Link href="/">Terms</Link>
+          <Link href="/pricing">Pricing</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/refund-policy">Refunds</Link>
+          <Link href="/shipping-policy">Shipping</Link>
+          <Link href="/contact">Contact</Link>
           <span>© 2026</span>
         </div>
       </footer>

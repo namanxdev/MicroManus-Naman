@@ -1006,6 +1006,7 @@ svg {
 
 .landing-footer > div {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 18px;
   font-family: var(--mono);
@@ -1327,6 +1328,350 @@ svg {
   color: var(--muted);
   font-size: 8px;
 }
+
+.checkout-legal {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.checkout-legal a,
+.sign-in-legal a,
+.policy-document a,
+.pricing-details a {
+  border-bottom: 1px solid currentColor;
+  font-weight: 700;
+}
+
+/* Sign in */
+.sign-in-page,
+.policy-page,
+.pricing-page {
+  position: relative;
+  min-height: 100dvh;
+  background: var(--paper);
+}
+
+.sign-in-layout {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(420px, .72fr);
+  align-items: center;
+  gap: clamp(70px, 10vw, 170px);
+  width: min(1180px, 100%);
+  min-height: calc(100dvh - 76px);
+  margin: 0 auto;
+  padding: 70px 42px 90px;
+}
+
+.sign-in-note > span {
+  display: inline-block;
+  padding: 8px 10px;
+  border: 1px solid var(--ink);
+  background: var(--signal);
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.sign-in-note h2 {
+  margin: 27px 0 22px;
+  font-family: var(--editorial);
+  font-size: clamp(46px, 5vw, 68px);
+  font-weight: 480;
+  letter-spacing: -.052em;
+  line-height: .99;
+}
+
+.sign-in-note > p {
+  max-width: 490px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.sign-in-note ul {
+  display: grid;
+  gap: 0;
+  max-width: 490px;
+  margin: 36px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line-strong);
+  list-style: none;
+}
+
+.sign-in-note li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+}
+
+.sign-in-note li svg { color: var(--success); }
+
+.sign-in-panel {
+  width: 100%;
+  padding: 37px 38px 32px;
+  border: 1px solid var(--ink);
+  background: var(--paper-raised);
+  box-shadow: 12px 14px 0 rgba(32, 34, 29, .09);
+}
+
+.sign-in-panel--loading {
+  min-height: 570px;
+  background: linear-gradient(100deg, var(--paper-raised) 20%, var(--paper-deep) 45%, var(--paper-raised) 70%);
+  background-size: 240% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.sign-in-panel__head h1 {
+  margin: 12px 0 10px;
+  font-family: var(--editorial);
+  font-size: 38px;
+  font-weight: 500;
+  letter-spacing: -.045em;
+}
+
+.sign-in-panel__head p {
+  margin: 0 0 25px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.sign-in-socials {
+  display: grid;
+  grid-template-columns: 1fr 48px;
+  gap: 8px;
+}
+
+.sign-in-socials button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 48px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 720;
+}
+
+.sign-in-socials button:first-child {
+  background: var(--ink);
+  color: var(--paper-raised);
+}
+
+.sign-in-socials button:disabled { opacity: .55; }
+
+.sign-in-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 25px 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: .09em;
+}
+
+.sign-in-divider::before,
+.sign-in-divider::after {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+  content: "";
+}
+
+.credential-form {
+  display: grid;
+}
+
+.credential-form label {
+  margin: 0 0 7px;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.credential-form input {
+  width: 100%;
+  height: 45px;
+  margin-bottom: 16px;
+  padding: 0 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  outline: 0;
+  background: var(--paper);
+  font-size: 12px;
+}
+
+.credential-form input:focus { border-color: var(--ink); box-shadow: 3px 3px 0 var(--signal); }
+.credential-form .primary-button { margin-top: 5px; }
+
+.sign-in-security {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.sign-in-security svg { flex: 0 0 auto; color: var(--success); }
+.sign-in-legal { margin: 18px 0 0; color: var(--muted); font-size: 8px; line-height: 1.55; text-align: center; }
+
+/* Public pricing and policies */
+.policy-nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 76px;
+  max-width: 1420px;
+  margin: 0 auto;
+  padding: 0 42px;
+  border-bottom: 1px solid var(--line);
+}
+
+.policy-nav > a:last-child {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.policy-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, .65fr) minmax(500px, 1fr);
+  gap: clamp(70px, 11vw, 170px);
+  width: min(1240px, 100%);
+  margin: 0 auto;
+  padding: 88px 42px 110px;
+}
+
+.policy-header { position: sticky; top: 38px; align-self: start; }
+.policy-header h1 {
+  margin: 17px 0 20px;
+  font-family: var(--editorial);
+  font-size: clamp(46px, 5vw, 66px);
+  font-weight: 480;
+  letter-spacing: -.052em;
+  line-height: 1;
+}
+
+.policy-header p {
+  max-width: 440px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.policy-document { border-top: 1px solid var(--ink); }
+.policy-document > section {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 18px;
+  padding: 28px 0 31px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.policy-document > section > span {
+  padding-top: 3px;
+  color: var(--signal-deep);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.policy-document h2 { margin: 0 0 11px; font-size: 17px; letter-spacing: -.025em; }
+.policy-document p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.78; }
+.policy-document p + p { margin-top: 10px; }
+
+.policy-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  min-height: 94px;
+  padding: 26px 5.7vw;
+  background: var(--ink);
+  color: #aeb0a5;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.policy-footer div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 18px; }
+.policy-footer a:hover { color: var(--signal); }
+
+.pricing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(390px, .65fr);
+  align-items: center;
+  gap: clamp(70px, 10vw, 150px);
+  width: min(1240px, 100%);
+  min-height: 690px;
+  margin: 0 auto;
+  padding: 80px 42px 95px;
+}
+
+.pricing-hero h1 {
+  margin: 20px 0 25px;
+  font-family: var(--editorial);
+  font-size: clamp(52px, 5.8vw, 78px);
+  font-weight: 470;
+  letter-spacing: -.058em;
+  line-height: .98;
+}
+
+.pricing-hero > div > p {
+  max-width: 530px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.public-price-card {
+  padding: 30px;
+  border: 1px solid var(--ink);
+  background: var(--signal);
+  box-shadow: 12px 14px 0 rgba(32, 34, 29, .1);
+}
+
+.public-price-card__head { display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); font-size: 8px; font-weight: 800; letter-spacing: .09em; }
+.public-price-card > strong { display: block; margin: 28px 0 2px; font-family: var(--mono); font-size: 55px; font-weight: 570; letter-spacing: -.08em; }
+.public-price-card > small { font-family: var(--mono); font-size: 8px; text-transform: uppercase; }
+.public-price-card ul { display: grid; gap: 0; margin: 29px 0 25px; padding: 0; border-top: 1px solid rgba(32, 34, 29, .28); list-style: none; }
+.public-price-card li { display: flex; align-items: center; gap: 8px; padding: 11px 0; border-bottom: 1px solid rgba(32, 34, 29, .22); font-size: 10px; }
+.public-price-card .primary-button { background: var(--ink); }
+.public-price-card > p { margin: 13px 0 0; font-size: 8px; line-height: 1.55; text-align: center; }
+
+.pricing-details {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: min(1240px, calc(100% - 84px));
+  margin: 0 auto 110px;
+  border-top: 1px solid var(--ink);
+}
+
+.pricing-details article { padding: 29px 30px 10px 0; border-right: 1px solid var(--line); }
+.pricing-details article:not(:first-child) { padding-left: 30px; }
+.pricing-details article:last-child { border-right: 0; }
+.pricing-details article > span { color: var(--signal-deep); font-family: var(--mono); font-size: 9px; font-weight: 800; }
+.pricing-details h2 { margin: 17px 0 10px; font-size: 16px; }
+.pricing-details p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.pricing-details a { display: inline-block; margin-top: 13px; font-size: 10px; }
 
 .option-divider {
   position: relative;
@@ -2545,6 +2890,17 @@ svg {
   .paywall-story { max-width: 720px; }
   .activation-panel { width: min(530px, 100%); }
 
+  .sign-in-layout { grid-template-columns: 1fr; gap: 55px; padding: 58px 28px 80px; }
+  .sign-in-note { max-width: 650px; }
+  .sign-in-panel { width: min(510px, 100%); }
+  .policy-layout { grid-template-columns: 1fr; gap: 50px; padding: 70px 28px 90px; }
+  .policy-header { position: static; max-width: 650px; }
+  .pricing-hero { grid-template-columns: 1fr; gap: 55px; padding: 68px 28px 90px; }
+  .public-price-card { width: min(510px, 100%); }
+  .pricing-details { grid-template-columns: 1fr; width: calc(100% - 56px); }
+  .pricing-details article,
+  .pricing-details article:not(:first-child) { padding: 27px 0; border-right: 0; border-bottom: 1px solid var(--line); }
+
   .app-sidebar { transform: translateX(-100%); transition: transform 240ms cubic-bezier(.16,1,.3,1); }
   .app-sidebar--open { transform: translateX(0); }
   .app-sidebar__close { display: grid; width: 31px; height: 31px; border-color: rgba(255,255,255,.15); color: #dddcd4; }
@@ -2597,6 +2953,21 @@ svg {
   .activation-panel { padding: 26px 20px; box-shadow: 8px 9px 0 rgba(32,34,29,.08); }
   .checkout-option__title { grid-template-columns: 28px 1fr; }
   .recommended-label { display: none; }
+
+  .sign-in-layout { padding: 46px 20px 64px; }
+  .sign-in-note h2 { font-size: 46px; }
+  .sign-in-panel { padding: 28px 20px 25px; box-shadow: 8px 9px 0 rgba(32,34,29,.08); }
+  .sign-in-panel__head h1 { font-size: 34px; }
+  .policy-nav { height: 66px; padding: 0 20px; }
+  .policy-layout { padding: 52px 20px 70px; }
+  .policy-header h1 { font-size: 47px; }
+  .policy-document > section { grid-template-columns: 25px 1fr; gap: 11px; }
+  .policy-footer { align-items: flex-start; flex-direction: column; }
+  .policy-footer div { justify-content: flex-start; }
+  .pricing-hero { min-height: 0; padding: 52px 20px 75px; }
+  .pricing-hero h1 { font-size: 49px; }
+  .public-price-card { padding: 25px 20px; box-shadow: 8px 9px 0 rgba(32,34,29,.09); }
+  .pricing-details { width: calc(100% - 40px); margin-bottom: 75px; }
 
   .app-sidebar { width: min(286px, 86vw); }
   .chat-header { align-items: flex-end; }

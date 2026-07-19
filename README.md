@@ -6,7 +6,7 @@ No LLM key is bundled with the application. Provider keys are supplied by each u
 
 ## What is included
 
-- Social-only Supabase authentication with a mandatory paywall
+- Supabase OAuth plus email/password authentication with a mandatory paywall
 - Idempotent `SID_DRDROID` redemption and Razorpay Standard Checkout ($5 → 5 credits)
 - Encrypted BYOK settings for OpenAI, Anthropic, Kimi, and HTTPS OpenAI-compatible endpoints
 - Persistent chats with same-thread LangGraph checkpoints
@@ -66,7 +66,7 @@ Your existing `.venv` remains the uv environment. The npm command creates the ro
 4. Set the same service token as `MICROMANUS_AGENT_SERVICE_TOKEN` in the agent and `AGENT_SERVICE_TOKEN` in the web app.
 5. Put the encryption key in `KEY_ENCRYPTION_SECRET`. Do not put provider LLM keys in either env file.
 6. Create a Supabase project and apply [the core migration](supabase/migrations/202607170001_micromanus_core.sql), followed by [the Razorpay migration](supabase/migrations/202607180001_razorpay_billing.sql) and [the expanded OpenAI catalog migration](supabase/migrations/202607180002_expand_openai_model_catalog.sql).
-7. Enable Google and/or GitHub in Supabase Auth. Add `http://localhost:3000/api/auth/callback` locally and the production equivalent to Supabase's redirect allow-list.
+7. Enable Email plus Google and/or GitHub in Supabase Auth. Add `http://localhost:3000/api/auth/callback` locally and the production equivalent to Supabase's redirect allow-list.
 8. Add `TAVILY_SEARCH_API_KEY` to the web service for internet research. Brave remains available as an
    optional fallback through `BRAVE_SEARCH_API_KEY`; Tavily is preferred when both are configured.
 9. Create a Razorpay test-mode account. Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and a separate `RAZORPAY_WEBHOOK_SECRET`.
@@ -139,6 +139,8 @@ Create a Test Mode webhook and later a separate Live Mode webhook at `https://YO
 Copy the webhook secret you chose to `RAZORPAY_WEBHOOK_SECRET`. It must be different from the API key secret. The implementation verifies the untouched request body, webhook signature, event ID, captured status, stored user/order mapping, amount, currency, order ID, and payment ID before moving credits.
 
 For Live Mode, finish Razorpay activation/KYC, generate Live Mode API keys, enable automatic capture, and enable International Payments if you are charging the assignment's literal USD $5. If International Payments is not enabled, configure an INR amount instead; the paywall renders the configured price so the advertised and charged amounts stay aligned.
+
+Before website review, set the public merchant/support variables from `.env.example`, create a dedicated ordinary email/password user in Supabase Auth, and give Razorpay only that test user's credentials. Do not share Google, GitHub, Supabase Dashboard, or Razorpay Dashboard credentials. The reviewer can sign in at `/sign-in`; public pricing, terms, privacy, refund, shipping, and contact pages are linked from the site footer.
 
 ### 5. Acceptance test
 
