@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ApiError, getJson, runResearchStream } from "../../lib/client/api";
 import {
   MOCK_CHATS,
@@ -15,6 +15,7 @@ import type {
   ChatListItem,
   ChatMessage,
   ChatThread,
+  Citation,
   ModelOption,
   StreamEvent,
 } from "../../lib/client/types";
@@ -28,6 +29,7 @@ import {
   FileIcon,
   LinkIcon,
   MoreIcon,
+  PlusIcon,
   SearchIcon,
   StopIcon,
 } from "../ui/icons";
@@ -249,18 +251,117 @@ function Composer({
   );
 }
 
-function MessageActions({ content }: { content: string }) {
+interface MenuItem {
+  key: string;
+  label: string;
+  icon?: ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+function ActionMenu({
+  items,
+  label,
+  triggerClassName = "action-menu__trigger",
+  align = "right",
+}: {
+  items: MenuItem[];
+  label: string;
+  triggerClassName?: string;
+  align?: "left" | "right";
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handlePointer(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    }
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
+  return (
+    <div className={`action-menu ${open ? "action-menu--open" : ""}`} ref={ref}>
+      <button
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label={label}
+        className={triggerClassName}
+        onClick={() => setOpen((value) => !value)}
+        type="button"
+      >
+        <MoreIcon size={16} />
+      </button>
+      {open && (
+        <div className="action-menu__pop" data-align={align} role="menu">
+          {items.map((item) => (
+            <button
+              className="action-menu__item"
+              disabled={item.disabled}
+              key={item.key}
+              onClick={() => {
+                item.onClick();
+                setOpen(false);
+              }}
+              role="menuitem"
+              type="button"
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function sourcesToText(citations: Citation[]) {
+  return citations
+    .map((item, index) => `${String(index + 1).padStart(2, "0")}. ${item.title} — ${item.url}`)
+    .join("\n");
+}
+
+function MessageActions({ content, citations }: { content: string; citations: Citation[] }) {
   const [copied, setCopied] = useState(false);
+
   async function copy() {
     await navigator.clipboard?.writeText(content);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1300);
   }
+
+  const menuItems: MenuItem[] = [
+    {
+      key: "copy-sources",
+      label: `Copy ${citations.length} source${citations.length === 1 ? "" : "s"}`,
+      icon: <LinkIcon size={13} />,
+      onClick: () => navigator.clipboard?.writeText(sourcesToText(citations)),
+      disabled: !citations.length,
+    },
+    {
+      key: "copy-all",
+      label: "Copy answer with sources",
+      icon: <FileIcon size={13} />,
+      onClick: () => navigator.clipboard?.writeText(
+        citations.length ? `${content}\n\nSources\n${sourcesToText(citations)}` : content,
+      ),
+    },
+  ];
+
   return (
     <div className="message-actions">
       <button onClick={copy} type="button"><CopyIcon size={14} /> {copied ? "Copied" : "Copy"}</button>
-      <button type="button"><LinkIcon size={14} /> Share</button>
-      <button aria-label="More actions" type="button"><MoreIcon size={16} /></button>
+      <ActionMenu items={menuItems} label="More answer actions" />
     </div>
   );
 }
@@ -300,7 +401,9 @@ function Conversation({ messages }: { messages: ChatMessage[] }) {
             )}
             <CitationList citations={message.citations || []} />
             <ArtifactList artifacts={message.artifacts || []} />
-            {message.status !== "streaming" && message.content && <MessageActions content={message.content} />}
+            {message.status !== "streaming" && message.content && (
+              <MessageActions content={message.content} citations={message.citations || []} />
+            )}
             <UsageFootnote usage={message.usage} />
             {message.status === "error" && (
               <div className="message-error" role="alert">The research run stopped before completion. Check your provider key and try again.</div>
@@ -310,6 +413,30 @@ function Conversation({ messages }: { messages: ChatMessage[] }) {
       )}
       <div ref={endRef} />
     </div>
+  );
+}
+
+function ThreadStatus({ messages, running }: { messages: ChatMessage[]; running: boolean }) {
+  const turns = messages.reduce((count, message) => count + (message.role === "user" ? 1 : 0), 0);
+
+  if (running) {
+    return (
+      <span className="context-badge context-badge--live" title="Researching — working through this turn">
+        <i aria-hidden="true" /> Researching
+      </span>
+    );
+  }
+  if (!turns) {
+    return (
+      <span className="context-badge" title="Ask a question to open this thread">
+        <ClockIcon size={14} /> New thread
+      </span>
+    );
+  }
+  return (
+    <span className="context-badge" title="Conversation context is kept across every turn in this thread">
+      <ClockIcon size={14} /> Context · {turns} turn{turns === 1 ? "" : "s"}
+    </span>
   );
 }
 
@@ -524,9 +651,28 @@ export function ChatWorkspace({ initialThreadId }: ChatWorkspaceProps) {
             <h1>{title}</h1>
           </div>
           <div className="chat-header__meta">
-            <span className="context-badge"><ClockIcon size={14} /> Context held</span>
+            <ThreadStatus messages={messages} running={running} />
             <ModelSelector model={model} models={modelOptions} onChange={setModel} />
-            <button aria-label="Conversation actions" className="icon-button" type="button"><MoreIcon /></button>
+            <ActionMenu
+              align="right"
+              label="Conversation actions"
+              triggerClassName="icon-button"
+              items={[
+                {
+                  key: "copy-link",
+                  label: "Copy link to thread",
+                  icon: <LinkIcon size={13} />,
+                  onClick: () => navigator.clipboard?.writeText(window.location.href),
+                  disabled: !threadId,
+                },
+                {
+                  key: "new-research",
+                  label: "New research",
+                  icon: <PlusIcon size={13} />,
+                  onClick: () => window.location.assign("/chat"),
+                },
+              ]}
+            />
           </div>
         </header>
 

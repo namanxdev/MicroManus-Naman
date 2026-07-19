@@ -31,21 +31,45 @@ function formatTokens(value: number) {
   return value.toLocaleString();
 }
 
+function niceCeil(value: number) {
+  if (value <= 0) return 0.01;
+  const magnitude = 10 ** Math.floor(Math.log10(value));
+  const normalized = value / magnitude;
+  const step = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  return step * magnitude;
+}
+
+function formatAxis(value: number) {
+  if (value <= 0) return "$0";
+  const decimals = value >= 1 ? 2 : value >= 0.1 ? 2 : value >= 0.01 ? 3 : 4;
+  return `$${value.toFixed(decimals)}`;
+}
+
 function CostChart({ data }: { data: NonNullable<UsageResponse["daily"]> }) {
-  const points = useMemo(() => {
-    const max = Math.max(...data.map((item) => item.cost), 0.01);
-    return data
+  const { points, top } = useMemo(() => {
+    const rawMax = Math.max(...data.map((item) => item.cost), 0);
+    const ceiling = niceCeil(rawMax);
+    const coordinates = data
       .map((item, index) => {
         const x = data.length === 1 ? 50 : (index / (data.length - 1)) * 100;
-        const y = 48 - (item.cost / max) * 39;
+        const y = 48 - (item.cost / ceiling) * 39;
         return `${x},${y}`;
       })
       .join(" ");
+    return { points: coordinates, top: ceiling };
   }, [data]);
+
+  if (!data.length) {
+    return <p className="cost-chart cost-chart--empty">No spend recorded in this period yet.</p>;
+  }
 
   return (
     <div className="cost-chart">
-      <div className="cost-chart__axis"><span>$0.40</span><span>$0.20</span><span>$0.00</span></div>
+      <div className="cost-chart__axis">
+        <span>{formatAxis(top)}</span>
+        <span>{formatAxis(top / 2)}</span>
+        <span>$0</span>
+      </div>
       <svg aria-label="Daily spend chart" preserveAspectRatio="none" role="img" viewBox="0 0 100 52">
         <defs>
           <linearGradient id="costArea" x1="0" x2="0" y1="0" y2="1">
@@ -57,9 +81,8 @@ function CostChart({ data }: { data: NonNullable<UsageResponse["daily"]> }) {
         <polygon fill="url(#costArea)" points={`0,48 ${points} 100,48`} />
         <polyline className="chart-line" points={points} />
         {data.map((item, index) => {
-          const max = Math.max(...data.map((entry) => entry.cost), 0.01);
           const x = data.length === 1 ? 50 : (index / (data.length - 1)) * 100;
-          const y = 48 - (item.cost / max) * 39;
+          const y = 48 - (item.cost / top) * 39;
           return <circle className="chart-point" cx={x} cy={y} key={item.label} r="1.1" />;
         })}
       </svg>

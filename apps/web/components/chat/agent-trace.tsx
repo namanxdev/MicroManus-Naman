@@ -73,36 +73,54 @@ export function AgentTrace({ steps }: { steps: AgentStep[] }) {
   );
 }
 
+const CITATION_PREVIEW = 6;
+
 export function CitationList({ citations }: { citations: Citation[] }) {
+  const [expanded, setExpanded] = useState(false);
   if (!citations.length) return null;
+
+  const visible = expanded ? citations : citations.slice(0, CITATION_PREVIEW);
+  const hasMore = citations.length > CITATION_PREVIEW;
+
   return (
     <section className="citation-section">
       <div className="message-section-title">
         <span>Sources</span>
         <small>{citations.length} consulted</small>
       </div>
-      <div className="citation-list">
-        {citations.map((citation, index) => {
+      <div className="citation-grid">
+        {visible.map((citation, index) => {
           const internal = citation.url.startsWith("/");
           return (
             <a
-              className="citation-item"
+              className="source-chip"
               href={citation.url}
               key={citation.id}
               rel={internal ? undefined : "noreferrer"}
               target={internal ? undefined : "_blank"}
+              title={`${citation.title}${citation.excerpt ? `\n\n${citation.excerpt}` : ""}`}
             >
-              <span className="citation-item__number">{String(index + 1).padStart(2, "0")}</span>
-              <span className="citation-item__body">
-                <small>{citation.domain || "Source"}{citation.publishedAt ? ` · ${citation.publishedAt}` : ""}</small>
+              <span className="source-chip__number">{String(index + 1).padStart(2, "0")}</span>
+              <span className="source-chip__body">
                 <strong>{citation.title}</strong>
-                {citation.excerpt && <p>{citation.excerpt}</p>}
+                <small>{citation.domain || "Source"}{citation.publishedAt ? ` · ${citation.publishedAt}` : ""}</small>
               </span>
-              <ExternalLinkIcon size={15} />
+              <ExternalLinkIcon size={13} />
             </a>
           );
         })}
       </div>
+      {hasMore && (
+        <button
+          aria-expanded={expanded}
+          className="citation-toggle"
+          onClick={() => setExpanded((value) => !value)}
+          type="button"
+        >
+          {expanded ? "Show fewer sources" : `Show all ${citations.length} sources`}
+          <ChevronDownIcon className={expanded ? "is-rotated" : ""} size={14} />
+        </button>
+      )}
     </section>
   );
 }
